@@ -9,8 +9,8 @@
 #include "TexturedTriangle.h"
 
 uint32_t TexturedTriangle::getTextureColour(TexturePoint texturePoint, TextureMap &textureMap) {
-    int texX = round(texturePoint.x * (textureMap.width - 1));
-    int texY = round(texturePoint.y * (textureMap.height - 1));
+    int texX = texturePoint.x * (textureMap.width - 1);
+    int texY = texturePoint.y * (textureMap.height - 1);
 
     int index = texY * textureMap.width + texX;
 
@@ -24,9 +24,9 @@ void TexturedTriangle::fillTopTexturedTriangle(CanvasPoint topVertex, CanvasPoin
     float currentX1 = topVertex.x;
     float currentX2 = topVertex.x;
 
-    for (float y = topVertex.y; y <= bottomEdge1.y; ++y) {
-        CanvasPoint from = {currentX1, y};
-        CanvasPoint to = {currentX2, y};
+    for (float y = topVertex.y; y <= bottomEdge1.y; y++) {
+        CanvasPoint from = {round(currentX1), y};
+        CanvasPoint to = {round(currentX2), y};
 
         float disRatio = (y - topVertex.y) / (bottomEdge1.y - topVertex.y);
         TexturePoint fromTP = {topVertex.texturePoint.x + disRatio * (bottomEdge1.texturePoint.x - topVertex.texturePoint.x),
@@ -48,9 +48,9 @@ void TexturedTriangle::fillBottomTexturedTriangle(CanvasPoint bottomVertex, Canv
     float currentX1 = topEdge1.x;
     float currentX2 = topEdge2.x;
 
-    for (float y = topEdge1.y; y <= bottomVertex.y; ++y) {
-        CanvasPoint from = {currentX1, y};
-        CanvasPoint to = {currentX2, y};
+    for (float y = topEdge1.y; y <= bottomVertex.y; y++) {
+        CanvasPoint from = {round(currentX1), y};
+        CanvasPoint to = {round(currentX2), y};
 
         float disRatio = (y - topEdge1.y) / (bottomVertex.y - topEdge1.y);
         TexturePoint fromTP = {topEdge1.texturePoint.x + disRatio * (bottomVertex.texturePoint.x - topEdge1.texturePoint.x),

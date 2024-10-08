@@ -13,7 +13,7 @@ void ColouredTriangle::fillTopColouredTriangle(CanvasPoint topVertex, CanvasPoin
     float currentX1 = topVertex.x;
     float currentX2 = topVertex.x;
 
-    for (float y = topVertex.y; y <= bottomEdge1.y; ++y) {
+    for (float y = topVertex.y; y <= bottomEdge1.y; y++) {
         CanvasPoint from = {currentX1, y};
         CanvasPoint to = {currentX2, y};
 
@@ -31,7 +31,7 @@ void ColouredTriangle::fillBottomColouredTriangle(CanvasPoint bottomVertex, Canv
     float currentX1 = topEdge1.x;
     float currentX2 = topEdge2.x;
 
-    for (float y = topEdge1.y; y <= bottomVertex.y; ++y) {
+    for (float y = topEdge1.y; y <= bottomVertex.y; y++) {
         CanvasPoint from = {currentX1, y};
         CanvasPoint to = {currentX2, y};
 

@@ -39,8 +39,8 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 
             CanvasTriangle triangle = {v0, v1, v2};
 
-            Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
             TexturedTriangle::fillTexturedTriangle(triangle, textureMap, window);
+            Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
         }
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN) {

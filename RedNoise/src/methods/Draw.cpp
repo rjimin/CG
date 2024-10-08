@@ -32,8 +32,8 @@ void Draw::draw2DColour(DrawingWindow &window) {
     std::vector<glm::vec3> firstCol = Interpolation::interpolateThreeElementValues(topLeft, bottomLeft, window.height);
     std::vector<glm::vec3> lastCol = Interpolation::interpolateThreeElementValues(topRight, bottomRight, window.height);
 
-    for (size_t y = 0; y < window.height; ++y) {
-        for (size_t x = 0; x < window.width; ++x) {
+    for (size_t y = 0; y < window.height; y++) {
+        for (size_t x = 0; x < window.width; x++) {
             std::vector<glm::vec3> eachRow = Interpolation::interpolateThreeElementValues(firstCol[y], lastCol[y], window.width);
             glm::vec3 pixel = eachRow[x];
             uint32_t colour = (255 << 24) + (uint32_t(pixel[0]) << 16) + (uint32_t(pixel[1]) << 8) + uint32_t(pixel[2]);
@@ -53,10 +53,10 @@ void Draw::drawLine(CanvasPoint from, CanvasPoint to, Colour colour, DrawingWind
 
     uint32_t lineColour = (255 << 24) + (uint32_t(colour.red) << 16) + (uint32_t(colour.green) << 8) + uint32_t(colour.blue);
 
-    for (float i = 0.0; i < numberOfSteps; ++i) {
+    for (float i = 0.0; i < numberOfSteps; i++) {
         float x = from.x + (xStepSize * i);
         float y = from.y + (yStepSize * i);
-        window.setPixelColour(round(x), round(y), lineColour);
+        window.setPixelColour(x, y, lineColour);
     }
 }
 
@@ -73,15 +73,13 @@ void Draw::drawTexturedLine(CanvasPoint from, CanvasPoint to, TexturePoint fromT
     float numberOfSteps = fmax(abs(xDiff), abs(yDiff));
 
     std::vector<CanvasPoint> canvasPoints = Interpolation::interpolateCanvasPoints(from, to, numberOfSteps);
-
     std::vector<TexturePoint> texturePoints = Interpolation::interpolateTexturePoints(fromTP, toTP, numberOfSteps);
 
-    for (float i = 0.0; i < canvasPoints.size(); ++i) {
+    for (float i = 0.0; i < canvasPoints.size(); i++) {
         CanvasPoint canvasPoint = canvasPoints[i];
         TexturePoint texturePoint = texturePoints[i];
 
         uint32_t colour = TexturedTriangle::getTextureColour(texturePoint, textureMap);
-
-        window.setPixelColour(round(canvasPoint.x), round(canvasPoint.y), colour);
+        window.setPixelColour(canvasPoint.x, canvasPoint.y, colour);
     }
 }
