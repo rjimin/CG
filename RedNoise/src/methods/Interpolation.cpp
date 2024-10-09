@@ -41,7 +41,6 @@ std::vector<CanvasPoint> Interpolation::interpolateCanvasPoints(CanvasPoint from
         canvasPoints.x = from.x + stepX * i;
         canvasPoints.y = from.y + stepY * i;
 
-
         result.push_back(canvasPoints);
     }
     return result;

@@ -6,7 +6,7 @@
 #include "Triangle.h"
 #include "ColouredTriangle.h"
 
-void ColouredTriangle::fillTopColouredTriangle(CanvasPoint topVertex, CanvasPoint bottomEdge1, CanvasPoint bottomEdge2, Colour colour, DrawingWindow &window) {
+void fillTopColouredTriangle(CanvasPoint topVertex, CanvasPoint bottomEdge1, CanvasPoint bottomEdge2, Colour colour, DrawingWindow &window) {
     float stepX1 = (bottomEdge1.x - topVertex.x) / (bottomEdge1.y - topVertex.y);
     float stepX2 = (bottomEdge2.x - topVertex.x) / (bottomEdge2.y - topVertex.y);
 
@@ -24,7 +24,7 @@ void ColouredTriangle::fillTopColouredTriangle(CanvasPoint topVertex, CanvasPoin
     }
 }
 
-void ColouredTriangle::fillBottomColouredTriangle(CanvasPoint bottomVertex, CanvasPoint topEdge1, CanvasPoint topEdge2, Colour colour, DrawingWindow &window) {
+void fillBottomColouredTriangle(CanvasPoint bottomVertex, CanvasPoint topEdge1, CanvasPoint topEdge2, Colour colour, DrawingWindow &window) {
     float stepX1 = (bottomVertex.x - topEdge1.x) / (bottomVertex.y - topEdge1.y);
     float stepX2 = (bottomVertex.x - topEdge2.x) / (bottomVertex.y - topEdge2.y);
 
