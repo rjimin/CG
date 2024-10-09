@@ -10,6 +10,7 @@
 #include "methods/Triangle.h"
 #include "methods/TexturedTriangle.h"
 #include "methods/ColouredTriangle.h"
+#include "methods/loadFile.h"
 
 void handleEvent(SDL_Event event, DrawingWindow &window) {
     if (event.type == SDL_KEYDOWN) {
@@ -52,6 +53,16 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 int main(int argc, char *argv[]) {
     DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
     SDL_Event event;
+
+    std::vector<std::vector<float>> depthBuffer(WIDTH, std::vector<float>(HEIGHT, 0.0f));
+
+    loadFile objFile;
+    objFile.loadObj();
+
+    glm::vec3 cameraPosition = {0.0, 0.0, 4.0};
+    float focalLength = 2.0;
+
+    Draw::drawFilledModel(window, cameraPosition, focalLength, objFile.triangles, depthBuffer);
 
 //    std::vector<float> result;
 //    result = interpolateSingleFloats(2.2, 8.5, 7);

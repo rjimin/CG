@@ -6,8 +6,12 @@
 #include <CanvasPoint.h>
 #include <Colour.h>
 #include <TextureMap.h>
+#include <ModelTriangle.h>
+#include "Constants.h"
 #include "Interpolation.h"
 #include "TexturedTriangle.h"
+#include "Projection.h"
+#include "ColouredTriangleWithDepth.h"
 #include "Draw.h"
 
 void Draw::drawGreyscale(DrawingWindow &window) {
@@ -81,5 +85,72 @@ void Draw::drawTexturedLine(CanvasPoint from, CanvasPoint to, TexturePoint fromT
 
         uint32_t colour = TexturedTriangle::getTextureColour(texturePoint, textureMap);
         window.setPixelColour(canvasPoint.x, canvasPoint.y, colour);
+    }
+}
+
+void Draw::drawPoint(DrawingWindow &window, const CanvasPoint &point, Colour colour) {
+    uint32_t pointColour = (255 << 24) + (int(colour.red) << 16) + (int(colour.green) << 8) + int(colour.blue);
+    window.setPixelColour(point.x, point.y, pointColour);
+}
+
+void Draw::drawWireframe(DrawingWindow &window, const glm::vec3 &cameraPosition, float focalLength, const std::vector<ModelTriangle> &triangles) {
+    for (const ModelTriangle &triangle : triangles) {
+
+        CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[0]);
+        CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[1]);
+        CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[2]);
+
+        CanvasTriangle canvasTriangle = {v0, v1, v2};
+
+        Draw::drawStrokedTriangle(canvasTriangle, Colour{255, 255, 255}, window);
+    }
+}
+
+void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, DrawingWindow &window, std::vector<std::vector<float>> &depthBuffer) {
+    uint32_t pixelColour = (255 << 24) + (int(colour.red) << 16) + (int(colour.green) << 8) + int(colour.blue);
+
+    float xDiff = to.x - from.x;
+    float yDiff = to.y - from.y;
+    float zDiff = to.depth - from.depth;
+
+    float steps = fmax(abs(xDiff), abs(yDiff));
+    float xStep = xDiff / steps;
+    float yStep = yDiff / steps;
+    float zStep = zDiff / steps;
+
+    float x = from.x;
+    float y = from.y;
+    float depth = from.depth;
+
+    for (int i = 0; i <= steps; i++) {
+        int pixelX = static_cast<int>(x);
+        int pixelY = static_cast<int>(y);
+
+        if (pixelX >= 0 && pixelX < WIDTH && pixelY >= 0 && pixelY < HEIGHT) {
+            if (depthBuffer[pixelX][pixelY] <= 0 || depth > depthBuffer[pixelX][pixelY]) {
+                depthBuffer[pixelX][pixelY] = depth;
+                window.setPixelColour(pixelX, pixelY, pixelColour);
+            }
+        }
+        x += xStep;
+        y += yStep;
+        depth += zStep;
+    }
+}
+
+void Draw::drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPosition, float focalLength,
+                           const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
+    for (const ModelTriangle &triangle : triangles) {
+        CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[0]);
+        CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[1]);
+        CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[2]);
+
+        v0.depth = 1.0f / triangle.vertices[0].z;
+        v1.depth = 1.0f / triangle.vertices[1].z;
+        v2.depth = 1.0f / triangle.vertices[2].z;
+
+        CanvasTriangle canvasTriangle = {v0, v1, v2};
+
+        ColouredTriangleWithDepth::fillColouredTriangle(canvasTriangle, triangle.colour, window, depthBuffer);
     }
 }
