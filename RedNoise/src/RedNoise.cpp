@@ -12,12 +12,68 @@
 #include "methods/ColouredTriangle.h"
 #include "methods/loadFile.h"
 
-void handleEvent(SDL_Event event, DrawingWindow &window) {
+void draw(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
+          const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
+
+    window.clearPixels();
+
+    for (std::vector<float> &row : depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
+
+    Draw::drawFilledModel(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+}
+
+void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation) {
     if (event.type == SDL_KEYDOWN) {
-        if (event.key.keysym.sym == SDLK_LEFT) std::cout << "LEFT" << std::endl;
-        else if (event.key.keysym.sym == SDLK_RIGHT) std::cout << "RIGHT" << std::endl;
-        else if (event.key.keysym.sym == SDLK_UP) std::cout << "UP" << std::endl;
-        else if (event.key.keysym.sym == SDLK_DOWN) std::cout << "DOWN" << std::endl;
+        float translationAmount = 0.1f;
+        float rotationAngle = glm::radians(5.0f);
+
+//        if (event.key.keysym.sym == SDLK_LEFT) std::cout << "LEFT" << std::endl;
+//        else if (event.key.keysym.sym == SDLK_RIGHT) std::cout << "RIGHT" << std::endl;
+//        else if (event.key.keysym.sym == SDLK_UP) std::cout << "UP" << std::endl;
+//        else if (event.key.keysym.sym == SDLK_DOWN) std::cout << "DOWN" << std::endl;
+
+        // Rotation controls
+        if (event.key.keysym.sym == SDLK_LEFT) {
+            glm::mat3 rotationY(
+            glm::vec3(cos(rotationAngle), 0, sin(rotationAngle)),
+                    glm::vec3(0, 1, 0),
+                    glm::vec3(-sin(rotationAngle), 0, cos(rotationAngle))
+            );
+            cameraOrientation = rotationY * cameraOrientation;
+        }
+        else if (event.key.keysym.sym == SDLK_RIGHT) {
+            glm::mat3 rotationY(
+                    glm::vec3(cos(-rotationAngle), 0, sin(-rotationAngle)),
+                    glm::vec3(0, 1, 0),
+                    glm::vec3(-sin(-rotationAngle), 0, cos(-rotationAngle))
+            );
+            cameraOrientation = rotationY * cameraOrientation;
+        }
+        else if (event.key.keysym.sym == SDLK_UP) {
+            glm::mat3 rotationX(
+                    glm::vec3(1, 0, 0),
+                    glm::vec3(0, cos(rotationAngle), -sin(rotationAngle)),
+                    glm::vec3(0, sin(rotationAngle), cos(rotationAngle))
+            );
+            cameraOrientation = rotationX * cameraOrientation;
+        }
+        else if (event.key.keysym.sym == SDLK_DOWN) {
+            glm::mat3 rotationX(
+                    glm::vec3(1, 0, 0),
+                    glm::vec3(0, cos(-rotationAngle), -sin(-rotationAngle)),
+                    glm::vec3(0, sin(-rotationAngle), cos(-rotationAngle))
+            );
+            cameraOrientation = rotationX * cameraOrientation;
+        }
+
+        // Translation controls
+        else if (event.key.keysym.sym == SDLK_w) cameraPosition.z -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_s) cameraPosition.z += translationAmount;
+        else if (event.key.keysym.sym == SDLK_a) cameraPosition.x -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_d) cameraPosition.x += translationAmount;
+        else if (event.key.keysym.sym == SDLK_q) cameraPosition.y += translationAmount;
+        else if (event.key.keysym.sym == SDLK_e) cameraPosition.y -= translationAmount;
+
         else if (event.key.keysym.sym == SDLK_u) {
             Draw::drawStrokedTriangle(Triangle::RandomTriangle(), {rand()%256, rand()%256, rand()%256}, window);
         }
@@ -60,9 +116,9 @@ int main(int argc, char *argv[]) {
     objFile.loadObj();
 
     glm::vec3 cameraPosition = {0.0, 0.0, 4.0};
-    float focalLength = 2.0;
+    glm::mat3 cameraOrientation = glm::mat3(1.0f);
 
-    Draw::drawFilledModel(window, cameraPosition, focalLength, objFile.triangles, depthBuffer);
+    float focalLength = 2.0;
 
 //    std::vector<float> result;
 //    result = interpolateSingleFloats(2.2, 8.5, 7);
@@ -75,7 +131,8 @@ int main(int argc, char *argv[]) {
 
     while (true) {
         // We MUST poll for events - otherwise the window will freeze !
-        if (window.pollForInputEvents(event)) handleEvent(event, window);
+        if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation);
+        draw(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
 //		drawLine(top_left, centre, colour, window);
 //		drawLine(top_right, centre, colour, window);
 //		drawLine(CanvasPoint(WIDTH / 2, 0), CanvasPoint(WIDTH / 2, HEIGHT), colour, window);

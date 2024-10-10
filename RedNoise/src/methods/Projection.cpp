@@ -3,12 +3,13 @@
 #include "Constants.h"
 #include "Projection.h"
 
-CanvasPoint Projection::projectVertexOntoCanvasPoint(glm::vec3 cameraPosition, float focalLength, glm::vec3 vertexPosition) {
-    glm::vec3 cameraCoords = vertexPosition - cameraPosition;
+CanvasPoint Projection::projectVertexOntoCanvasPoint(glm::vec3 cameraPosition, glm::mat3 cameraOrientation, float focalLength, glm::vec3 vertexPosition) {
+    glm::vec3 cameraToVertex = vertexPosition - cameraPosition;
+    glm::vec3 adjustedVector = cameraToVertex * cameraOrientation;
 
-    float x = cameraCoords.x;
-    float y = cameraCoords.y;
-    float z = cameraCoords.z;
+    float x = adjustedVector.x;
+    float y = adjustedVector.y;
+    float z = adjustedVector.z;
 
     if (z >= 0) {
         std::cerr << "Skipping vertex with invalid z-value: " << z << std::endl;

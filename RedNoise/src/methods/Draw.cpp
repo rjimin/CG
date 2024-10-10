@@ -93,12 +93,13 @@ void Draw::drawPoint(DrawingWindow &window, const CanvasPoint &point, Colour col
     window.setPixelColour(point.x, point.y, pointColour);
 }
 
-void Draw::drawWireframe(DrawingWindow &window, const glm::vec3 &cameraPosition, float focalLength, const std::vector<ModelTriangle> &triangles) {
+void Draw::drawWireframe(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
+                         const std::vector<ModelTriangle> &triangles) {
     for (const ModelTriangle &triangle : triangles) {
 
-        CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[0]);
-        CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[1]);
-        CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[2]);
+        CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[0]);
+        CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[1]);
+        CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[2]);
 
         CanvasTriangle canvasTriangle = {v0, v1, v2};
 
@@ -138,12 +139,12 @@ void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, Drawin
     }
 }
 
-void Draw::drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPosition, float focalLength,
+void Draw::drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
                            const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
     for (const ModelTriangle &triangle : triangles) {
-        CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[0]);
-        CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[1]);
-        CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, focalLength, triangle.vertices[2]);
+        CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[0]);
+        CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[1]);
+        CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[2]);
 
         v0.depth = 1.0f / triangle.vertices[0].z;
         v1.depth = 1.0f / triangle.vertices[1].z;
