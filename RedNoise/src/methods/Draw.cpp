@@ -128,7 +128,7 @@ void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, Drawin
         int pixelY = static_cast<int>(y);
 
         if (pixelX >= 0 && pixelX < WIDTH && pixelY >= 0 && pixelY < HEIGHT) {
-            if (depthBuffer[pixelX][pixelY] <= 0 || depth > depthBuffer[pixelX][pixelY]) {
+            if (depth > depthBuffer[pixelX][pixelY]) {
                 depthBuffer[pixelX][pixelY] = depth;
                 window.setPixelColour(pixelX, pixelY, pixelColour);
             }
@@ -146,9 +146,9 @@ void Draw::drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPositio
         CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[1]);
         CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[2]);
 
-        v0.depth = 1.0f / triangle.vertices[0].z;
-        v1.depth = 1.0f / triangle.vertices[1].z;
-        v2.depth = 1.0f / triangle.vertices[2].z;
+        v0.depth = 1.0f / std::abs(triangle.vertices[0].z);
+        v1.depth = 1.0f / std::abs(triangle.vertices[1].z);
+        v2.depth = 1.0f / std::abs(triangle.vertices[2].z);
 
         CanvasTriangle canvasTriangle = {v0, v1, v2};
 
