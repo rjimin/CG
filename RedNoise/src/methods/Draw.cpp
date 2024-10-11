@@ -57,7 +57,7 @@ void Draw::drawLine(CanvasPoint from, CanvasPoint to, Colour colour, DrawingWind
 
     uint32_t lineColour = (255 << 24) + (uint32_t(colour.red) << 16) + (uint32_t(colour.green) << 8) + uint32_t(colour.blue);
 
-    for (float i = 0.0; i < numberOfSteps; i++) {
+    for (float i = 0.0; i <= numberOfSteps; i++) {
         float x = from.x + (xStepSize * i);
         float y = from.y + (yStepSize * i);
         window.setPixelColour(x, y, lineColour);
@@ -123,7 +123,7 @@ void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, Drawin
     float y = from.y;
     float depth = from.depth;
 
-    for (int i = 0; i <= steps; i++) {
+    for (float i = 0.0; i <= steps; i++) {
         int pixelX = static_cast<int>(x);
         int pixelY = static_cast<int>(y);
 

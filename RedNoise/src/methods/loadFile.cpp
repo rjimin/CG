@@ -90,7 +90,7 @@ void loadFile::loadObj() {
 
             if (colourMap.find(colourName) != colourMap.end()) {
                 glm::vec3 rgb = colourMap[colourName];
-                colour = Colour(rgb.x * 255, rgb.y * 255, rgb.z * 255);
+                colour = Colour(rgb.r * 255, rgb.g * 255, rgb.b * 255);
             }
         }
     }
