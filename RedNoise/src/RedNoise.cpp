@@ -2,7 +2,6 @@
 #include <DrawingWindow.h>
 #include <Utils.h>
 #include <CanvasPoint.h>
-#include <Colour.h>
 #include <TextureMap.h>
 
 #include "methods/Draw.h"
@@ -12,13 +11,53 @@
 #include "methods/ColouredTriangle.h"
 #include "methods/loadFile.h"
 
-void draw(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
+bool isOrbiting = false;
+
+glm::vec3 calculateCenter(const std::vector<ModelTriangle> &triangles) {
+    glm::vec3 minCoords = glm::vec3(std::numeric_limits<float>::max());
+    glm::vec3 maxCoords = glm::vec3(std::numeric_limits<float>::lowest());
+
+    for (const ModelTriangle &triangle : triangles) {
+        for (const glm::vec3 &vertex : triangle.vertices) {
+            minCoords.x = std::min(minCoords.x, vertex.x);
+            minCoords.y = std::min(minCoords.y, vertex.y);
+            minCoords.z = std::min(minCoords.z, vertex.z);
+
+            maxCoords.x = std::max(maxCoords.x, vertex.x);
+            maxCoords.y = std::max(maxCoords.y, vertex.y);
+            maxCoords.z = std::max(maxCoords.z, vertex.z);
+        }
+    }
+    return (minCoords + maxCoords) / 2.0f;
+}
+
+glm::mat3 lookAt(const glm::vec3 &cameraPosition, const glm::vec3 &target) {
+    glm::vec3 forward = glm::normalize(cameraPosition - target);
+    glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0, 1, 0), forward));
+    glm::vec3 up = glm::cross(forward, right);
+    return glm::mat3(right, up, forward);
+}
+
+void draw(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
           const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
 
     window.clearPixels();
 
     for (std::vector<float> &row : depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
 
+    if (isOrbiting) {
+        float orbitAngle = glm::radians(0.2f);
+        glm::mat3 orbitRotation(
+        glm::vec3(cos(orbitAngle), 0, sin(orbitAngle)),
+                glm::vec3(0, 1, 0),
+                glm::vec3(-sin(orbitAngle), 0, cos(orbitAngle))
+        );
+
+        cameraPosition = glm::normalize(orbitRotation * cameraPosition) * 4.0f;
+
+        glm::vec3 target = calculateCenter(triangles);
+        cameraOrientation = lookAt(cameraPosition, target);
+    }
     Draw::drawFilledModel(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
 }
 
@@ -66,6 +105,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             cameraOrientation = rotationX * cameraOrientation;
         }
 
+        else if (event.key.keysym.sym == SDLK_o) isOrbiting = !isOrbiting;
         // Translation controls
         else if (event.key.keysym.sym == SDLK_w) cameraPosition.z -= translationAmount;
         else if (event.key.keysym.sym == SDLK_s) cameraPosition.z += translationAmount;
