@@ -146,9 +146,7 @@ void Draw::drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPositio
         CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[1]);
         CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[2]);
 
-        v0.depth = 1.0f / std::abs(triangle.vertices[0].z);
-        v1.depth = 1.0f / std::abs(triangle.vertices[1].z);
-        v2.depth = 1.0f / std::abs(triangle.vertices[2].z);
+        if (v0.depth == 0 || v1.depth == 0 || v2.depth == 0) continue;
 
         CanvasTriangle canvasTriangle = {v0, v1, v2};
 
