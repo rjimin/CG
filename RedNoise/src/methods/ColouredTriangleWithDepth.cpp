@@ -6,12 +6,13 @@
 #include "Triangle.h"
 #include "ColouredTriangleWithDepth.h"
 
-void fillTopColouredTriangle(CanvasPoint topVertex, CanvasPoint bottomEdge1, CanvasPoint bottomEdge2, Colour colour, DrawingWindow &window, std::vector<std::vector<float>> &depthBuffer) {
-    float stepX1 = (bottomEdge1.x - topVertex.x) / (bottomEdge1.y - topVertex.y);
-    float stepX2 = (bottomEdge2.x - topVertex.x) / (bottomEdge2.y - topVertex.y);
+void fillFlatBottomTriangle(CanvasPoint topVertex, CanvasPoint bottomEdgeVertex1, CanvasPoint bottomEdgeVertex2, Colour colour, DrawingWindow &window,
+                            std::vector<std::vector<float>> &depthBuffer) {
+    float stepX1 = (bottomEdgeVertex1.x - topVertex.x) / (bottomEdgeVertex1.y - topVertex.y);
+    float stepX2 = (bottomEdgeVertex2.x - topVertex.x) / (bottomEdgeVertex2.y - topVertex.y);
 
-    float stepDepth1 = (bottomEdge1.depth - topVertex.depth) / (bottomEdge1.y - topVertex.y);
-    float stepDepth2 = (bottomEdge2.depth - topVertex.depth) / (bottomEdge2.y - topVertex.y);
+    float stepDepth1 = (bottomEdgeVertex1.depth - topVertex.depth) / (bottomEdgeVertex1.y - topVertex.y);
+    float stepDepth2 = (bottomEdgeVertex2.depth - topVertex.depth) / (bottomEdgeVertex2.y - topVertex.y);
 
     float currentX1 = topVertex.x;
     float currentX2 = topVertex.x;
@@ -19,7 +20,7 @@ void fillTopColouredTriangle(CanvasPoint topVertex, CanvasPoint bottomEdge1, Can
     float currentDepth1 = topVertex.depth;
     float currentDepth2 = topVertex.depth;
 
-    for (float y = topVertex.y; y <= bottomEdge1.y; y++) {
+    for (float y = topVertex.y; y <= bottomEdgeVertex1.y; y++) {
         CanvasPoint from = {currentX1, y, currentDepth1};
         CanvasPoint to = {currentX2, y, currentDepth2};
 
@@ -33,20 +34,21 @@ void fillTopColouredTriangle(CanvasPoint topVertex, CanvasPoint bottomEdge1, Can
     }
 }
 
-void fillBottomColouredTriangle(CanvasPoint bottomVertex, CanvasPoint topEdge1, CanvasPoint topEdge2, Colour colour, DrawingWindow &window, std::vector<std::vector<float>> &depthBuffer) {
-    float stepX1 = (bottomVertex.x - topEdge1.x) / (bottomVertex.y - topEdge1.y);
-    float stepX2 = (bottomVertex.x - topEdge2.x) / (bottomVertex.y - topEdge2.y);
+void fillFlatTopTriangle(CanvasPoint bottomVertex, CanvasPoint topEdgeVertex1, CanvasPoint topEdgeVertex2, Colour colour, DrawingWindow &window,
+                         std::vector<std::vector<float>> &depthBuffer) {
+    float stepX1 = (bottomVertex.x - topEdgeVertex1.x) / (bottomVertex.y - topEdgeVertex1.y);
+    float stepX2 = (bottomVertex.x - topEdgeVertex2.x) / (bottomVertex.y - topEdgeVertex2.y);
 
-    float stepDepth1 = (bottomVertex.depth - topEdge1.depth) / (bottomVertex.y - topEdge1.y);
-    float stepDepth2 = (bottomVertex.depth - topEdge2.depth) / (bottomVertex.y - topEdge2.y);
+    float stepDepth1 = (bottomVertex.depth - topEdgeVertex1.depth) / (bottomVertex.y - topEdgeVertex1.y);
+    float stepDepth2 = (bottomVertex.depth - topEdgeVertex2.depth) / (bottomVertex.y - topEdgeVertex2.y);
 
-    float currentX1 = topEdge1.x;
-    float currentX2 = topEdge2.x;
+    float currentX1 = topEdgeVertex1.x;
+    float currentX2 = topEdgeVertex2.x;
 
-    float currentDepth1 = topEdge1.depth;
-    float currentDepth2 = topEdge2.depth;
+    float currentDepth1 = topEdgeVertex1.depth;
+    float currentDepth2 = topEdgeVertex2.depth;
 
-    for (float y = topEdge1.y; y <= bottomVertex.y; y++) {
+    for (float y = topEdgeVertex1.y; y <= bottomVertex.y; y++) {
         CanvasPoint from = {currentX1, y, currentDepth1};
         CanvasPoint to = {currentX2, y, currentDepth2};
 
@@ -68,10 +70,10 @@ void ColouredTriangleWithDepth::fillColouredTriangle(CanvasTriangle triangle, Co
     CanvasPoint v2 = sortedTriangle.v2();
 
     if (v1.y == v2.y) {
-        fillTopColouredTriangle(v0, v1, v2, colour, window, depthBuffer);
+        fillFlatBottomTriangle(v0, v1, v2, colour, window, depthBuffer);
     }
     else if (v0.y == v1.y) {
-        fillBottomColouredTriangle(v2, v0, v1, colour, window, depthBuffer);
+        fillFlatTopTriangle(v2, v0, v1, colour, window, depthBuffer);
     }
     else {
         float splitRatio = (v1.y - v0.y) / (v2.y - v0.y);
@@ -79,7 +81,7 @@ void ColouredTriangleWithDepth::fillColouredTriangle(CanvasTriangle triangle, Co
         float v3_Depth = v0.depth + splitRatio * (v2.depth - v0.depth);
         CanvasPoint v3 = {v3_X, v1.y, v3_Depth};
 
-        fillTopColouredTriangle(v0, v1, v3, colour, window, depthBuffer);
-        fillBottomColouredTriangle(v2, v1, v3, colour, window, depthBuffer);
+        fillFlatBottomTriangle(v0, v1, v3, colour, window, depthBuffer);
+        fillFlatTopTriangle(v2, v1, v3, colour, window, depthBuffer);
     }
 }

@@ -71,9 +71,11 @@ void loadFile::loadObj() {
 
         if (identifier == "v") {
             float x, y, z;
+            float scalingFactor = 0.35f;
+
             lineStream >> x >> y >> z;
 
-            glm::vec3 vertex(x * 0.35f, y * 0.35f, z * 0.35f);
+            glm::vec3 vertex(x * scalingFactor, y * scalingFactor, z * scalingFactor);
             vertices.push_back(vertex);
         }
         else if (identifier == "f") {

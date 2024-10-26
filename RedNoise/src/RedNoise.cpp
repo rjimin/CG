@@ -109,10 +109,10 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
         // Translation controls
         else if (event.key.keysym.sym == SDLK_w) cameraPosition.z -= translationAmount;
         else if (event.key.keysym.sym == SDLK_s) cameraPosition.z += translationAmount;
-        else if (event.key.keysym.sym == SDLK_a) cameraPosition.x -= translationAmount;
-        else if (event.key.keysym.sym == SDLK_d) cameraPosition.x += translationAmount;
-        else if (event.key.keysym.sym == SDLK_q) cameraPosition.y += translationAmount;
-        else if (event.key.keysym.sym == SDLK_e) cameraPosition.y -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_a && cameraPosition.x > - (WIDTH / 2)) cameraPosition.x -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_d && cameraPosition.x < WIDTH / 2) cameraPosition.x += translationAmount;
+        else if (event.key.keysym.sym == SDLK_q && cameraPosition.y < HEIGHT / 2) cameraPosition.y += translationAmount;
+        else if (event.key.keysym.sym == SDLK_e && cameraPosition.y > - (HEIGHT / 2)) cameraPosition.y -= translationAmount;
 
         else if (event.key.keysym.sym == SDLK_u) {
             Draw::drawStrokedTriangle(Triangle::RandomTriangle(), {rand()%256, rand()%256, rand()%256}, window);
