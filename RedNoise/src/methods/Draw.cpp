@@ -71,8 +71,8 @@ void Draw::drawStrokedTriangle(CanvasTriangle triangle, Colour colour, DrawingWi
 }
 
 void Draw::drawTexturedLine(CanvasPoint from, CanvasPoint to, TexturePoint fromTP, TexturePoint toTP, TextureMap &textureMap, DrawingWindow &window) {
-    float xDiff = to.x -from.x;
-    float yDiff = to.y -from.y;
+    float xDiff = to.x - from.x;
+    float yDiff = to.y - from.y;
 
     float numberOfSteps = fmax(abs(xDiff), abs(yDiff));
 
@@ -146,7 +146,10 @@ void Draw::drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPositio
         CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[1]);
         CanvasPoint v2 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[2]);
 
-        if (v0.depth == 0 || v1.depth == 0 || v2.depth == 0) continue;
+        if (v0.depth == 0 || v1.depth == 0 || v2.depth == 0) {
+            std::cerr << "Skipping vertex with invalid depth" << std::endl;
+            continue;
+        }
 
         CanvasTriangle canvasTriangle = {v0, v1, v2};
 

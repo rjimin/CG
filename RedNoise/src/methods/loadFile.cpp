@@ -7,7 +7,6 @@
 #include <sstream>
 #include "loadFile.h"
 
-std::vector<glm::vec3> loadFile::vertices;
 std::vector<ModelTriangle> loadFile::triangles;
 Colour loadFile::colour;
 
@@ -61,6 +60,7 @@ void loadFile::loadObj() {
     }
 
     std::string line;
+    std::vector<glm::vec3> vertices;
 
     while (getline(objFile, line)) {
         if(line.empty()) continue;

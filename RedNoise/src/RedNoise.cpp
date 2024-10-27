@@ -48,11 +48,11 @@ void draw(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOri
     if (isOrbiting) {
         float orbitAngle = glm::radians(0.2f);
         glm::mat3 orbitRotation(
-        glm::vec3(cos(orbitAngle), 0, sin(orbitAngle)),
-                glm::vec3(0, 1, 0),
-                glm::vec3(-sin(orbitAngle), 0, cos(orbitAngle))
+                cos(orbitAngle), 0, sin(orbitAngle),
+                0, 1, 0,
+                -sin(orbitAngle), 0, cos(orbitAngle)
         );
-
+        
         cameraPosition = glm::normalize(orbitRotation * cameraPosition) * 4.0f;
 
         glm::vec3 target = calculateCenter(triangles);
@@ -74,33 +74,33 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
         // Rotation controls
         if (event.key.keysym.sym == SDLK_LEFT) {
             glm::mat3 rotationY(
-            glm::vec3(cos(rotationAngle), 0, sin(rotationAngle)),
-                    glm::vec3(0, 1, 0),
-                    glm::vec3(-sin(rotationAngle), 0, cos(rotationAngle))
+                    cos(rotationAngle), 0, sin(rotationAngle),
+                    0, 1, 0,
+                    -sin(rotationAngle), 0, cos(rotationAngle)
             );
             cameraOrientation = rotationY * cameraOrientation;
         }
         else if (event.key.keysym.sym == SDLK_RIGHT) {
             glm::mat3 rotationY(
-                    glm::vec3(cos(-rotationAngle), 0, sin(-rotationAngle)),
-                    glm::vec3(0, 1, 0),
-                    glm::vec3(-sin(-rotationAngle), 0, cos(-rotationAngle))
+                    cos(-rotationAngle), 0, sin(-rotationAngle),
+                    0, 1, 0,
+                    -sin(-rotationAngle), 0, cos(-rotationAngle)
             );
             cameraOrientation = rotationY * cameraOrientation;
         }
         else if (event.key.keysym.sym == SDLK_UP) {
             glm::mat3 rotationX(
-                    glm::vec3(1, 0, 0),
-                    glm::vec3(0, cos(rotationAngle), -sin(rotationAngle)),
-                    glm::vec3(0, sin(rotationAngle), cos(rotationAngle))
+                    1, 0, 0,
+                    0, cos(rotationAngle), -sin(rotationAngle),
+                    0, sin(rotationAngle), cos(rotationAngle)
             );
             cameraOrientation = rotationX * cameraOrientation;
         }
         else if (event.key.keysym.sym == SDLK_DOWN) {
             glm::mat3 rotationX(
-                    glm::vec3(1, 0, 0),
-                    glm::vec3(0, cos(-rotationAngle), -sin(-rotationAngle)),
-                    glm::vec3(0, sin(-rotationAngle), cos(-rotationAngle))
+                    1, 0, 0,
+                    0, cos(-rotationAngle), -sin(-rotationAngle),
+                    0, sin(-rotationAngle), cos(-rotationAngle)
             );
             cameraOrientation = rotationX * cameraOrientation;
         }
