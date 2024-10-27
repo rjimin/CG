@@ -21,14 +21,13 @@ void fillFlatBottomTriangle(CanvasPoint topVertex, CanvasPoint bottomEdgeVertex1
     float currentDepth2 = topVertex.depth;
 
     for (float y = topVertex.y; y <= bottomEdgeVertex1.y; y++) {
-        CanvasPoint from = {currentX1, y, currentDepth1};
-        CanvasPoint to = {currentX2, y, currentDepth2};
+        CanvasPoint from = {std::round(currentX1), y, currentDepth1};
+        CanvasPoint to = {std::round(currentX2), y, currentDepth2};
 
         Draw::drawDepthLine(from, to, colour, window, depthBuffer);
 
         currentX1 += stepX1;
         currentX2 += stepX2;
-
         currentDepth1 += stepDepth1;
         currentDepth2 += stepDepth2;
     }
@@ -49,14 +48,13 @@ void fillFlatTopTriangle(CanvasPoint bottomVertex, CanvasPoint topEdgeVertex1, C
     float currentDepth2 = topEdgeVertex2.depth;
 
     for (float y = topEdgeVertex1.y; y <= bottomVertex.y; y++) {
-        CanvasPoint from = {currentX1, y, currentDepth1};
-        CanvasPoint to = {currentX2, y, currentDepth2};
+        CanvasPoint from = {std::round(currentX1), y, currentDepth1};
+        CanvasPoint to = {std::round(currentX2), y, currentDepth2};
 
         Draw::drawDepthLine(from, to, colour, window, depthBuffer);
 
         currentX1 += stepX1;
         currentX2 += stepX2;
-
         currentDepth1 += stepDepth1;
         currentDepth2 += stepDepth2;
     }
@@ -79,7 +77,7 @@ void ColouredTriangleWithDepth::fillColouredTriangle(CanvasTriangle triangle, Co
         float splitRatio = (v1.y - v0.y) / (v2.y - v0.y);
         float v3_X = v0.x + splitRatio * (v2.x - v0.x);
         float v3_Depth = v0.depth + splitRatio * (v2.depth - v0.depth);
-        CanvasPoint v3 = {v3_X, v1.y, v3_Depth};
+        CanvasPoint v3 = {std::round(v3_X), v1.y, v3_Depth};
 
         fillFlatBottomTriangle(v0, v1, v3, colour, window, depthBuffer);
         fillFlatTopTriangle(v2, v1, v3, colour, window, depthBuffer);
