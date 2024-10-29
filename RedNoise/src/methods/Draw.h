@@ -17,6 +17,6 @@ public:
     static void drawWireframe(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
                               const std::vector<ModelTriangle> &triangles);
     static void drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, DrawingWindow &window, std::vector<std::vector<float>> &depthBuffer);
-    static void drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
+    static void drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
                                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer);
 };

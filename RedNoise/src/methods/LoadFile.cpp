@@ -5,10 +5,10 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <sstream>
-#include "loadFile.h"
+#include "LoadFile.h"
 
-std::vector<ModelTriangle> loadFile::triangles;
-Colour loadFile::colour;
+std::vector<ModelTriangle> LoadFile::triangles;
+Colour LoadFile::colour;
 
 std::unordered_map<std::string, glm::vec3> loadMaterials() {
     std::ifstream mtlFile("models/cornell-box.mtl");
@@ -49,7 +49,7 @@ std::unordered_map<std::string, glm::vec3> loadMaterials() {
     return colourMap;
 }
 
-void loadFile::loadObj() {
+void LoadFile::loadObj() {
     std::unordered_map<std::string, glm::vec3> colourMap = loadMaterials();
 
     std::ifstream objFile("models/cornell-box.obj");

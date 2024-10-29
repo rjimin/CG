@@ -42,9 +42,10 @@ add_executable(RedNoise
         src/methods/Triangle.cpp
         src/methods/TexturedTriangle.cpp
         src/methods/ColouredTriangle.cpp
-        src/methods/loadFile.cpp
+        src/methods/LoadFile.cpp
         src/methods/Projection.cpp
-        src/methods/ColouredTriangleWithDepth.cpp)
+        src/methods/ColouredTriangleWithDepth.cpp
+        src/methods/RayTracer.cpp)
 
 if (MSVC)
     target_compile_options(RedNoise

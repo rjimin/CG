@@ -139,7 +139,7 @@ void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, Drawin
     }
 }
 
-void Draw::drawFilledModel(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
+void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
                            const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
     for (const ModelTriangle &triangle : triangles) {
         CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[0]);

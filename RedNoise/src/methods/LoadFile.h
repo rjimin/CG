@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <ModelTriangle.h>
 
-class loadFile {
+class LoadFile {
 public:
     static std::vector<ModelTriangle> triangles;
     static Colour colour;

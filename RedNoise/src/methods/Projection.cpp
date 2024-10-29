@@ -16,13 +16,13 @@ CanvasPoint Projection::projectVertexOntoCanvasPoint(glm::vec3 cameraPosition, g
         return {};
     }
 
-    CanvasPoint imagePlanePos;
+    CanvasPoint projectedCanvasPoint;
 
     float scalingFactor = 160.0f;
 
-    imagePlanePos.x = -((x * focalLength) / z * scalingFactor) + (WIDTH / 2.0f);
-    imagePlanePos.y = ((y * focalLength) / z * scalingFactor) + (HEIGHT / 2.0f);
-    imagePlanePos.depth = 1.0f / std::abs(z);
+    projectedCanvasPoint.x = -((x * focalLength) / z * scalingFactor) + (WIDTH / 2.0f);
+    projectedCanvasPoint.y = ((y * focalLength) / z * scalingFactor) + (HEIGHT / 2.0f);
+    projectedCanvasPoint.depth = 1.0f / std::abs(z);
 
-    return imagePlanePos;
+    return projectedCanvasPoint;
 }

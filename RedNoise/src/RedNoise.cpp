@@ -3,13 +3,15 @@
 #include <Utils.h>
 #include <CanvasPoint.h>
 #include <TextureMap.h>
+#include <RayTriangleIntersection.h>
 
 #include "methods/Draw.h"
 #include "methods/Constants.h"
 #include "methods/Triangle.h"
 #include "methods/TexturedTriangle.h"
 #include "methods/ColouredTriangle.h"
-#include "methods/loadFile.h"
+#include "methods/LoadFile.h"
+#include "methods/RayTracer.h"
 
 bool isOrbiting = false;
 
@@ -38,7 +40,7 @@ glm::mat3 lookAt(const glm::vec3 &cameraPosition, const glm::vec3 &target) {
     return glm::mat3(right, up, forward);
 }
 
-void draw(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
+void drawOrbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
           const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
 
     window.clearPixels();
@@ -58,7 +60,40 @@ void draw(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOri
         glm::vec3 target = calculateCenter(triangles);
         cameraOrientation = lookAt(cameraPosition, target);
     }
-    Draw::drawFilledModel(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+    Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+}
+
+void draw(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
+          const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
+
+    window.clearPixels();
+
+    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
+
+    float scalingFactor = 160.0f;
+
+    for (size_t y = 0; y < HEIGHT; y++) {
+        for (size_t x = 0; x < WIDTH; x++) {
+
+            glm::vec3 imagePlanePos((x - WIDTH / 2.0f) / scalingFactor, - (y - HEIGHT / 2.0f) / scalingFactor, - focalLength);
+            glm::vec3 rayDirection = glm::normalize(cameraOrientation * imagePlanePos);
+
+            RayTriangleIntersection intersection = RayTracer::getClosestIntersection(cameraPosition, rayDirection, triangles);
+
+            if (RayTracer::intersectionFound) {
+                if (intersection.distanceFromCamera > depthBuffer[x][y]) {
+
+                    depthBuffer[x][y] = intersection.distanceFromCamera;
+
+                    uint32_t colour = (255 << 24) + (intersection.intersectedTriangle.colour.red << 16) +
+                                      (intersection.intersectedTriangle.colour.green << 8) +
+                                      intersection.intersectedTriangle.colour.blue;
+
+                    window.setPixelColour(x, y, colour);
+                }
+            }
+        }
+    }
 }
 
 void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation) {
@@ -152,7 +187,7 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::vector<float>> depthBuffer(WIDTH, std::vector<float>(HEIGHT, 0.0f));
 
-    loadFile objFile;
+    LoadFile objFile;
     objFile.loadObj();
 
     glm::vec3 cameraPosition = {0.0, 0.0, 4.0};
