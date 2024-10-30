@@ -49,20 +49,23 @@ void Draw::draw2DColour(DrawingWindow &window) {
 }
 
 void Draw::drawLine(CanvasPoint from, CanvasPoint to, Colour colour, DrawingWindow &window) {
-    float xDiff = to.x -from.x;
-    float yDiff = to.y -from.y;
+    float xDiff = to.x - from.x;
+    float yDiff = to.y - from.y;
 
     float numberOfSteps = fmax(abs(xDiff), abs(yDiff));
 
-    float xStepSize = xDiff / numberOfSteps;
-    float yStepSize = yDiff / numberOfSteps;
+    float xStep = xDiff / numberOfSteps;
+    float yStep = yDiff / numberOfSteps;
 
     uint32_t lineColour = (255 << 24) + (uint32_t(colour.red) << 16) + (uint32_t(colour.green) << 8) + uint32_t(colour.blue);
 
     for (float i = 0.0; i <= numberOfSteps; i++) {
-        float x = from.x + (xStepSize * i);
-        float y = from.y + (yStepSize * i);
-        window.setPixelColour(x, y, lineColour);
+        int x = static_cast<int>(from.x + (xStep * i));
+        int y = static_cast<int>(from.y + (yStep * i));
+
+        if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT) {
+            window.setPixelColour(x, y, lineColour);
+        }
     }
 }
 
