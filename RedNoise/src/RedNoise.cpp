@@ -40,8 +40,8 @@ glm::mat3 lookAt(const glm::vec3 &cameraPosition, const glm::vec3 &target) {
     return glm::mat3(right, up, forward);
 }
 
-void drawOrbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-          const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
+void orbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
+           const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
 
     window.clearPixels();
 
@@ -63,40 +63,10 @@ void drawOrbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &came
     Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
 }
 
-void draw(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-          const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
 
-    window.clearPixels();
 
-    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
-
-    float scalingFactor = 160.0f;
-
-    for (size_t y = 0; y < HEIGHT; y++) {
-        for (size_t x = 0; x < WIDTH; x++) {
-
-            glm::vec3 imagePlanePos((x - WIDTH / 2.0f) / scalingFactor, - (y - HEIGHT / 2.0f) / scalingFactor, - focalLength);
-            glm::vec3 rayDirection = glm::normalize(cameraOrientation * imagePlanePos);
-
-            RayTriangleIntersection intersection = RayTracer::getClosestIntersection(cameraPosition, rayDirection, triangles);
-
-            if (RayTracer::intersectionFound) {
-                if (intersection.distanceFromCamera > depthBuffer[x][y]) {
-
-                    depthBuffer[x][y] = intersection.distanceFromCamera;
-
-                    uint32_t colour = (255 << 24) + (intersection.intersectedTriangle.colour.red << 16) +
-                                      (intersection.intersectedTriangle.colour.green << 8) +
-                                      intersection.intersectedTriangle.colour.blue;
-
-                    window.setPixelColour(x, y, colour);
-                }
-            }
-        }
-    }
-}
-
-void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation) {
+void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
+                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
     if (event.type == SDL_KEYDOWN) {
         float translationAmount = 0.1f;
         float rotationAngle = glm::radians(5.0f);
@@ -174,6 +144,15 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             TexturedTriangle::fillTexturedTriangle(triangle, textureMap, window);
             Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
         }
+        else if (event.key.keysym.sym == SDLK_b) {
+            Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles);
+        }
+        else if (event.key.keysym.sym == SDLK_n) {
+            Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+        }
+        else if (event.key.keysym.sym == SDLK_m) {
+            Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource);
+        }
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN) {
         window.savePPM("output.ppm");
@@ -195,23 +174,12 @@ int main(int argc, char *argv[]) {
 
     float focalLength = 2.0;
 
-//    std::vector<float> result;
-//    result = interpolateSingleFloats(2.2, 8.5, 7);
-//    for(size_t i=0; i<result.size(); i++) std::cout << result[i] << " ";
-//    std::cout << std::endl;
-
-//    CanvasPoint top_left = CanvasPoint(0, 0);
-//    CanvasPoint top_right = CanvasPoint(WIDTH, 0);
-//    CanvasPoint centre = CanvasPoint(WIDTH / 2,HEIGHT / 2);
+    glm::vec3 lightSource = {0.0, 0.0, 0.0};
 
     while (true) {
         // We MUST poll for events - otherwise the window will freeze !
-        if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation);
-        draw(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
-//		drawLine(top_left, centre, colour, window);
-//		drawLine(top_right, centre, colour, window);
-//		drawLine(CanvasPoint(WIDTH / 2, 0), CanvasPoint(WIDTH / 2, HEIGHT), colour, window);
-//		drawLine(CanvasPoint(WIDTH / 3, HEIGHT / 2), CanvasPoint((WIDTH / 3) * 2, HEIGHT / 2), colour, window);
+        if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation,
+                                                             focalLength, objFile.triangles, depthBuffer, lightSource);
         // Need to render the frame at the end, or nothing actually gets shown on the screen !
         window.renderFrame();
     }

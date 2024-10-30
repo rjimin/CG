@@ -12,6 +12,8 @@
 #include "TexturedTriangle.h"
 #include "Projection.h"
 #include "ColouredTriangleWithDepth.h"
+#include "RayTriangleIntersection.h"
+#include "RayTracer.h"
 #include "Draw.h"
 
 void Draw::drawGreyscale(DrawingWindow &window) {
@@ -154,5 +156,46 @@ void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPos
         CanvasTriangle canvasTriangle = {v0, v1, v2};
 
         ColouredTriangleWithDepth::fillColouredTriangle(canvasTriangle, triangle.colour, window, depthBuffer);
+    }
+}
+
+void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
+                              const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
+
+    window.clearPixels();
+
+    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
+
+    float scalingFactor = 160.0f;
+
+    for (size_t y = 0; y < HEIGHT; y++) {
+        for (size_t x = 0; x < WIDTH; x++) {
+
+            glm::vec3 imagePlanePos((x - WIDTH / 2.0f) / scalingFactor, - (y - HEIGHT / 2.0f) / scalingFactor, - focalLength);
+            glm::vec3 rayDirection = glm::normalize(cameraOrientation * imagePlanePos);
+
+            RayTriangleIntersection intersection = RayTracer::getClosestIntersection(cameraPosition, rayDirection, triangles, -1);
+
+            if (RayTracer::intersectionFound) {
+                if (intersection.distanceFromCamera > depthBuffer[x][y]) {
+
+                    depthBuffer[x][y] = intersection.distanceFromCamera;
+
+                    bool isShadowed = RayTracer::isShadowed(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
+
+                    uint32_t colour;
+                    if (isShadowed) {
+                        colour = (255 << 24) + ((intersection.intersectedTriangle.colour.red / 5) << 16) +
+                                 ((intersection.intersectedTriangle.colour.green / 5) << 8) +
+                                 (intersection.intersectedTriangle.colour.blue / 5);
+                    } else {
+                        colour = (255 << 24) + (intersection.intersectedTriangle.colour.red << 16) +
+                                 (intersection.intersectedTriangle.colour.green << 8) +
+                                 intersection.intersectedTriangle.colour.blue;
+                    }
+                    window.setPixelColour(x, y, colour);
+                }
+            }
+        }
     }
 }

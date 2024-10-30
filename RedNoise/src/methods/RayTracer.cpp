@@ -4,13 +4,15 @@
 
 bool RayTracer::intersectionFound = false;
 
-RayTriangleIntersection RayTracer::getClosestIntersection(glm::vec3 cameraPosition, glm::vec3 rayDirection, const std::vector<ModelTriangle> &triangles) {
+RayTriangleIntersection RayTracer::getClosestIntersection(glm::vec3 cameraPosition, glm::vec3 rayDirection, const std::vector<ModelTriangle> &triangles, size_t selfShadowExcludeIndex) {
     float smallestT = std::numeric_limits<float>::max();
-    size_t triangleIndex = 0;
     RayTriangleIntersection closestIntersection;
     intersectionFound = false;
 
-    for (const ModelTriangle &triangle: triangles) {
+    for (size_t triangleIndex = 0; triangleIndex < triangles.size(); triangleIndex++) {
+        const ModelTriangle &triangle = triangles[triangleIndex];
+
+        if (triangleIndex == selfShadowExcludeIndex) continue;
 
         glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
         glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
@@ -41,7 +43,13 @@ RayTriangleIntersection RayTracer::getClosestIntersection(glm::vec3 cameraPositi
                 );
             }
         }
-        triangleIndex++;
     }
     return closestIntersection;
+}
+
+bool RayTracer::isShadowed(const glm::vec3 &surfacePoint, const glm::vec3 &lightSource, const std::vector<ModelTriangle> &triangles, size_t triangleIndex) {
+    glm::vec3 shadowRayDirection = glm::normalize(lightSource - surfacePoint);
+    float lightDistance = glm::length(lightSource - surfacePoint);
+    RayTriangleIntersection shadowIntersection = getClosestIntersection(surfacePoint, shadowRayDirection, triangles, triangleIndex);
+    return intersectionFound && shadowIntersection.distanceFromCamera < lightDistance;
 }
