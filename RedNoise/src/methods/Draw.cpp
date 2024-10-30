@@ -142,7 +142,7 @@ void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, Drawin
 }
 
 void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
-                           const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
+                               const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
     for (const ModelTriangle &triangle : triangles) {
         CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[0]);
         CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[1]);
@@ -161,11 +161,6 @@ void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPos
 
 void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
                               const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
-
-    window.clearPixels();
-
-    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
-
     float scalingFactor = 160.0f;
 
     for (size_t y = 0; y < HEIGHT; y++) {

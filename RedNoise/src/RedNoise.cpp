@@ -15,6 +15,15 @@
 
 bool isOrbiting = false;
 
+enum RenderMode {
+    UNDEFINED,
+    RASTERISED,
+    WIREFRAME,
+    RAY_TRACED
+};
+
+RenderMode currentRenderMode = UNDEFINED;
+
 glm::vec3 calculateCenter(const std::vector<ModelTriangle> &triangles) {
     glm::vec3 minCoords = glm::vec3(std::numeric_limits<float>::max());
     glm::vec3 maxCoords = glm::vec3(std::numeric_limits<float>::lowest());
@@ -63,7 +72,27 @@ void orbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOr
     Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
 }
 
+void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
+                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
+    window.clearPixels();
+    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
 
+    if (currentRenderMode != UNDEFINED) {
+        switch (currentRenderMode) {
+            case RASTERISED:
+                Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+                break;
+            case WIREFRAME:
+                Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles);
+                break;
+            case RAY_TRACED:
+                Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource);
+                break;
+            default:
+                break;
+        }
+    }
+}
 
 void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
                  const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
@@ -144,15 +173,9 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             TexturedTriangle::fillTexturedTriangle(triangle, textureMap, window);
             Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
         }
-        else if (event.key.keysym.sym == SDLK_b) {
-            Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles);
-        }
-        else if (event.key.keysym.sym == SDLK_n) {
-            Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
-        }
-        else if (event.key.keysym.sym == SDLK_m) {
-            Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource);
-        }
+        else if (event.key.keysym.sym == SDLK_b) currentRenderMode = WIREFRAME;
+        else if (event.key.keysym.sym == SDLK_n) currentRenderMode = RASTERISED;
+        else if (event.key.keysym.sym == SDLK_m) currentRenderMode = RAY_TRACED;
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN) {
         window.savePPM("output.ppm");
@@ -180,6 +203,7 @@ int main(int argc, char *argv[]) {
         // We MUST poll for events - otherwise the window will freeze !
         if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation,
                                                              focalLength, objFile.triangles, depthBuffer, lightSource);
+        renderScene(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer, lightSource);
         // Need to render the frame at the end, or nothing actually gets shown on the screen !
         window.renderFrame();
     }
