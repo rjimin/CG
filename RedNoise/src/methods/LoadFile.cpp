@@ -84,6 +84,11 @@ void LoadFile::loadObj() {
             lineStream >> indexV1 >> slash >> indexV2 >> slash >> indexV3;
 
             ModelTriangle triangle(vertices[indexV1 - 1], vertices[indexV2 - 1], vertices[indexV3 - 1], colour);
+
+            glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
+            glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
+            triangle.normal = glm::normalize(glm::cross(e0, e1));
+
             triangles.push_back(triangle);
         }
         else if (identifier == "usemtl") {

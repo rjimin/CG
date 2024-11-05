@@ -181,16 +181,20 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
 
                     bool isShadowed = RayTracer::isShadowed(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
 
-                    uint32_t colour;
+                    float brightness = RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
+
+                    uint8_t red, green, blue;
                     if (isShadowed) {
-                        colour = (255 << 24) + ((intersection.intersectedTriangle.colour.red / 5) << 16) +
-                                 ((intersection.intersectedTriangle.colour.green / 5) << 8) +
-                                 (intersection.intersectedTriangle.colour.blue / 5);
+                        red = static_cast<uint8_t>((intersection.intersectedTriangle.colour.red / 2) * brightness);
+                        green = static_cast<uint8_t>((intersection.intersectedTriangle.colour.green / 2) * brightness);
+                        blue = static_cast<uint8_t>((intersection.intersectedTriangle.colour.blue / 2) * brightness);
                     } else {
-                        colour = (255 << 24) + (intersection.intersectedTriangle.colour.red << 16) +
-                                 (intersection.intersectedTriangle.colour.green << 8) +
-                                 intersection.intersectedTriangle.colour.blue;
+                        red = static_cast<uint8_t>(intersection.intersectedTriangle.colour.red * brightness);
+                        green = static_cast<uint8_t>(intersection.intersectedTriangle.colour.green * brightness);
+                        blue = static_cast<uint8_t>(intersection.intersectedTriangle.colour.blue * brightness);
                     }
+
+                    uint32_t colour = (255 << 24) + (red << 16) + (green << 8) + blue;
                     window.setPixelColour(x, y, colour);
                 }
             }

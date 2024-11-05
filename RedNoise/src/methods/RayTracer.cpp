@@ -4,7 +4,8 @@
 
 bool RayTracer::intersectionFound = false;
 
-RayTriangleIntersection RayTracer::getClosestIntersection(glm::vec3 cameraPosition, glm::vec3 rayDirection, const std::vector<ModelTriangle> &triangles, size_t selfShadowExcludeIndex) {
+RayTriangleIntersection RayTracer::getClosestIntersection(glm::vec3 cameraPosition, glm::vec3 rayDirection, const std::vector<ModelTriangle> &triangles,
+                                                          size_t selfShadowExcludeIndex) {
     float smallestT = std::numeric_limits<float>::max();
     RayTriangleIntersection closestIntersection;
     intersectionFound = false;
@@ -53,3 +54,27 @@ bool RayTracer::isShadowed(const glm::vec3 &surfacePoint, const glm::vec3 &light
     RayTriangleIntersection shadowIntersection = getClosestIntersection(surfacePoint, shadowRayDirection, triangles, triangleIndex);
     return intersectionFound && shadowIntersection.distanceFromCamera < lightDistance;
 }
+
+float RayTracer::calculateBrightness(glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
+    float brightness = 0.0f;
+    glm::vec3 lightDirection = glm::normalize(lightSource - intersectionPoint);
+
+    float distance = glm::length(lightSource - intersectionPoint);
+    float Proximitybrightness = 1.0f / (4.0f * M_PI * pow(distance, 2));
+
+    float AOIbrightness = glm::dot(normal, lightDirection);
+
+    float specularExponent = 256.0f;
+    glm::vec3 viewDirection = glm::normalize(cameraPosition - intersectionPoint);
+    glm::vec3 reflectionDirection = glm::normalize(lightDirection - 2.0f * normal * glm::dot(lightDirection, normal));
+    float specularFactor = glm::dot(viewDirection, reflectionDirection);
+    float Specularbrightness = pow(glm::max(specularFactor, 0.0f), specularExponent);
+
+    brightness = Proximitybrightness + AOIbrightness + Specularbrightness;
+
+    float ambientThreshold = 0.1f;
+    brightness = glm::max(brightness, ambientThreshold);
+
+    return glm::clamp(brightness, 0.0f, 1.0f);
+}
+

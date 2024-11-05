@@ -95,7 +95,7 @@ void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &ca
 }
 
 void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
+                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, glm::vec3 &lightSource) {
     if (event.type == SDL_KEYDOWN) {
         float translationAmount = 0.1f;
         float rotationAngle = glm::radians(5.0f);
@@ -140,6 +140,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
         }
 
         else if (event.key.keysym.sym == SDLK_o) isOrbiting = !isOrbiting;
+
         // Translation controls
         else if (event.key.keysym.sym == SDLK_w) cameraPosition.z -= translationAmount;
         else if (event.key.keysym.sym == SDLK_s) cameraPosition.z += translationAmount;
@@ -147,6 +148,14 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
         else if (event.key.keysym.sym == SDLK_d && cameraPosition.x < WIDTH / 2) cameraPosition.x += translationAmount;
         else if (event.key.keysym.sym == SDLK_q && cameraPosition.y < HEIGHT / 2) cameraPosition.y += translationAmount;
         else if (event.key.keysym.sym == SDLK_e && cameraPosition.y > - (HEIGHT / 2)) cameraPosition.y -= translationAmount;
+
+        // Light controls
+        if (event.key.keysym.sym == SDLK_i) lightSource.y += translationAmount;
+        else if (event.key.keysym.sym == SDLK_k) lightSource.y -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_j) lightSource.x -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_l) lightSource.x += translationAmount;
+        else if (event.key.keysym.sym == SDLK_u) lightSource.z -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_o) lightSource.z += translationAmount;
 
         else if (event.key.keysym.sym == SDLK_u) {
             Draw::drawStrokedTriangle(Triangle::RandomTriangle(), {rand()%256, rand()%256, rand()%256}, window);
@@ -197,7 +206,7 @@ int main(int argc, char *argv[]) {
 
     float focalLength = 2.0;
 
-    glm::vec3 lightSource = {0.0, 0.0, 0.0};
+    glm::vec3 lightSource = {0.0, 0.7, 0.0};
 
     while (true) {
         // We MUST poll for events - otherwise the window will freeze !
