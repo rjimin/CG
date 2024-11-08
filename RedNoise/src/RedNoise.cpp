@@ -73,20 +73,18 @@ void orbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOr
 }
 
 void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
-    window.clearPixels();
-    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
-
+                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource,
+                 std::unordered_map<int, glm::vec3> &vertexNormalMap) {
     if (currentRenderMode != UNDEFINED) {
         switch (currentRenderMode) {
             case RASTERISED:
                 Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
                 break;
             case WIREFRAME:
-                Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles);
+                Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
                 break;
             case RAY_TRACED:
-                Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource);
+                Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource, vertexNormalMap);
                 break;
             default:
                 break;
@@ -157,17 +155,18 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
         else if (event.key.keysym.sym == SDLK_u) lightSource.z -= translationAmount;
         else if (event.key.keysym.sym == SDLK_o) lightSource.z += translationAmount;
 
-        else if (event.key.keysym.sym == SDLK_u) {
+        // 2D Triangle
+        else if (event.key.keysym.sym == SDLK_g) {
             Draw::drawStrokedTriangle(Triangle::RandomTriangle(), {rand()%256, rand()%256, rand()%256}, window);
         }
         else if (event.key.keysym.sym == SDLK_f) {
             CanvasTriangle triangle = Triangle::RandomTriangle();
 
-            Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
             ColouredTriangle::fillColouredTriangle(triangle, {rand()%256, rand()%256, rand()%256}, window);
+            Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
         }
         else if (event.key.keysym.sym == SDLK_t) {
-            TextureMap textureMap("texture.ppm");
+            TextureMap textureMap("models/texture.ppm");
 
             CanvasPoint v0 = {160, 10};
             CanvasPoint v1 = {300, 230};
@@ -182,6 +181,8 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             TexturedTriangle::fillTexturedTriangle(triangle, textureMap, window);
             Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
         }
+
+        // Render Mode controls
         else if (event.key.keysym.sym == SDLK_b) currentRenderMode = WIREFRAME;
         else if (event.key.keysym.sym == SDLK_n) currentRenderMode = RASTERISED;
         else if (event.key.keysym.sym == SDLK_m) currentRenderMode = RAY_TRACED;
@@ -212,7 +213,8 @@ int main(int argc, char *argv[]) {
         // We MUST poll for events - otherwise the window will freeze !
         if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation,
                                                              focalLength, objFile.triangles, depthBuffer, lightSource);
-        renderScene(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer, lightSource);
+        renderScene(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer, lightSource, objFile.vertexNormalMap);
+        // orbit(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
         // Need to render the frame at the end, or nothing actually gets shown on the screen !
         window.renderFrame();
     }

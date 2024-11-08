@@ -9,6 +9,17 @@
 
 std::vector<ModelTriangle> LoadFile::triangles;
 Colour LoadFile::colour;
+std::unordered_map<int, glm::vec3> LoadFile::vertexNormalMap;
+std::vector<glm::vec3> vertices;
+
+int LoadFile::getVertexIndex(const glm::vec3& vertex) {
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        if (vertices[i] == vertex) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
 
 std::unordered_map<std::string, glm::vec3> loadMaterials() {
     std::ifstream mtlFile("models/cornell-box.mtl");
@@ -51,7 +62,6 @@ std::unordered_map<std::string, glm::vec3> loadMaterials() {
 
 void LoadFile::loadObj() {
     std::unordered_map<std::string, glm::vec3> colourMap = loadMaterials();
-
     std::ifstream objFile("models/cornell-box.obj");
 
     if (!objFile.is_open()) {
@@ -60,7 +70,9 @@ void LoadFile::loadObj() {
     }
 
     std::string line;
-    std::vector<glm::vec3> vertices;
+    std::unordered_map<int, std::vector<int>> vertexFaceMap;
+
+    int faceIndex = 0;
 
     while (getline(objFile, line)) {
         if(line.empty()) continue;
@@ -72,9 +84,7 @@ void LoadFile::loadObj() {
         if (identifier == "v") {
             float x, y, z;
             float scalingFactor = 0.35f;
-
             lineStream >> x >> y >> z;
-
             glm::vec3 vertex(x * scalingFactor, y * scalingFactor, z * scalingFactor);
             vertices.push_back(vertex);
         }
@@ -89,12 +99,32 @@ void LoadFile::loadObj() {
             glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
             triangle.normal = glm::normalize(glm::cross(e0, e1));
 
+            int findIndexV1 = getVertexIndex(vertices[indexV1 - 1]);
+            int findIndexV2 = getVertexIndex(vertices[indexV2 - 1]);
+            int findIndexV3 = getVertexIndex(vertices[indexV3 - 1]);
+
+            if (findIndexV1 == -1) {
+                vertexFaceMap[indexV1 - 1].push_back(faceIndex);
+            } else {
+                vertexFaceMap[findIndexV1].push_back(faceIndex);
+            }
+            if (findIndexV2 == -1) {
+                vertexFaceMap[indexV2 - 1].push_back(faceIndex);
+            } else {
+                vertexFaceMap[findIndexV2].push_back(faceIndex);
+            }
+            if (findIndexV3 == -1) {
+                vertexFaceMap[indexV3 - 1].push_back(faceIndex);
+            } else {
+                vertexFaceMap[findIndexV3].push_back(faceIndex);
+            }
+
             triangles.push_back(triangle);
+            faceIndex++;
         }
         else if (identifier == "usemtl") {
             std::string colourName;
             lineStream >> colourName;
-
             if (colourMap.find(colourName) != colourMap.end()) {
                 glm::vec3 rgb = colourMap[colourName];
                 colour = Colour(rgb.r * 255, rgb.g * 255, rgb.b * 255);
@@ -102,4 +132,16 @@ void LoadFile::loadObj() {
         }
     }
     objFile.close();
+
+    for (const auto& entry : vertexFaceMap) {
+        int vertexIndex = entry.first;
+        const std::vector<int>& faceIndices = entry.second;
+
+        glm::vec3 vertexNormal(0.0f, 0.0f, 0.0f);
+        for (int face : faceIndices) {
+            vertexNormal += triangles[face].normal;
+        }
+        vertexNormal = glm::normalize(vertexNormal / static_cast<float>(faceIndices.size()));
+        vertexNormalMap[vertexIndex] = vertexNormal;
+    }
 }

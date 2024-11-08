@@ -14,6 +14,7 @@
 #include "ColouredTriangleWithDepth.h"
 #include "RayTriangleIntersection.h"
 #include "RayTracer.h"
+#include "LoadFile.h"
 #include "Draw.h"
 
 void Draw::drawGreyscale(DrawingWindow &window) {
@@ -99,7 +100,10 @@ void Draw::drawPoint(DrawingWindow &window, const CanvasPoint &point, Colour col
 }
 
 void Draw::drawWireframe(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
-                         const std::vector<ModelTriangle> &triangles) {
+                         const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
+    window.clearPixels();
+    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
+
     for (const ModelTriangle &triangle : triangles) {
 
         CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[0]);
@@ -146,6 +150,9 @@ void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, Drawin
 
 void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
                                const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
+    window.clearPixels();
+    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
+
     for (const ModelTriangle &triangle : triangles) {
         CanvasPoint v0 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[0]);
         CanvasPoint v1 = Projection::projectVertexOntoCanvasPoint(cameraPosition, cameraOrientation, focalLength, triangle.vertices[1]);
@@ -163,25 +170,44 @@ void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPos
 }
 
 void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                              const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
+                              const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer,
+                              const glm::vec3 &lightSource, std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+    window.clearPixels();
+    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
+
     float scalingFactor = 160.0f;
 
     for (size_t y = 0; y < HEIGHT; y++) {
         for (size_t x = 0; x < WIDTH; x++) {
 
-            glm::vec3 imagePlanePos((x - WIDTH / 2.0f) / scalingFactor, - (y - HEIGHT / 2.0f) / scalingFactor, - focalLength);
+            glm::vec3 imagePlanePos((x - WIDTH / 2.0f) / scalingFactor, -(y - HEIGHT / 2.0f) / scalingFactor, -focalLength);
             glm::vec3 rayDirection = glm::normalize(cameraOrientation * imagePlanePos);
 
             RayTriangleIntersection intersection = RayTracer::getClosestIntersection(cameraPosition, rayDirection, triangles, -1);
 
             if (RayTracer::intersectionFound) {
-                if (intersection.distanceFromCamera > depthBuffer[x][y]) {
+                if (intersection.distanceFromCamera > 0) {
 
-                    depthBuffer[x][y] = intersection.distanceFromCamera;
+                    int indexV0 = LoadFile::getVertexIndex(intersection.intersectedTriangle.vertices[0]);
+                    int indexV1 = LoadFile::getVertexIndex(intersection.intersectedTriangle.vertices[1]);
+                    int indexV2 = LoadFile::getVertexIndex(intersection.intersectedTriangle.vertices[2]);
+
+                    glm::vec3 normalV0 = vertexNormalMap[indexV0];
+                    glm::vec3 normalV1 = vertexNormalMap[indexV1];
+                    glm::vec3 normalV2 = vertexNormalMap[indexV2];
+
+                    glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersection.intersectionPoint,
+                                                                                        intersection.intersectedTriangle.vertices[0],
+                                                                                        intersection.intersectedTriangle.vertices[1],
+                                                                                        intersection.intersectedTriangle.vertices[2]);
+
+                    glm::vec3 interpolatedNormal = glm::normalize(barycentricCoords.x * normalV0
+                                                                  + barycentricCoords.y * normalV1
+                                                                  + barycentricCoords.z * normalV2);
+
+                    float brightness = RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, interpolatedNormal, lightSource);
 
                     bool isShadowed = RayTracer::isShadowed(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
-
-                    float brightness = RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
 
                     uint8_t red, green, blue;
                     if (isShadowed) {
