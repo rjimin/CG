@@ -11,7 +11,6 @@
 #include "methods/TexturedTriangle.h"
 #include "methods/ColouredTriangle.h"
 #include "methods/LoadFile.h"
-#include "methods/RayTracer.h"
 
 bool isOrbiting = false;
 
@@ -23,24 +22,6 @@ enum RenderMode {
 };
 
 RenderMode currentRenderMode = UNDEFINED;
-
-glm::vec3 calculateCenter(const std::vector<ModelTriangle> &triangles) {
-    glm::vec3 minCoords = glm::vec3(std::numeric_limits<float>::max());
-    glm::vec3 maxCoords = glm::vec3(std::numeric_limits<float>::lowest());
-
-    for (const ModelTriangle &triangle : triangles) {
-        for (const glm::vec3 &vertex : triangle.vertices) {
-            minCoords.x = std::min(minCoords.x, vertex.x);
-            minCoords.y = std::min(minCoords.y, vertex.y);
-            minCoords.z = std::min(minCoords.z, vertex.z);
-
-            maxCoords.x = std::max(maxCoords.x, vertex.x);
-            maxCoords.y = std::max(maxCoords.y, vertex.y);
-            maxCoords.z = std::max(maxCoords.z, vertex.z);
-        }
-    }
-    return (minCoords + maxCoords) / 2.0f;
-}
 
 glm::mat3 lookAt(const glm::vec3 &cameraPosition, const glm::vec3 &target) {
     glm::vec3 forward = glm::normalize(cameraPosition - target);
@@ -66,7 +47,7 @@ void orbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOr
         
         cameraPosition = glm::normalize(orbitRotation * cameraPosition) * 4.0f;
 
-        glm::vec3 target = calculateCenter(triangles);
+        glm::vec3 target = Triangle::calculateCenter(triangles);
         cameraOrientation = lookAt(cameraPosition, target);
     }
     Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
@@ -214,7 +195,7 @@ int main(int argc, char *argv[]) {
         if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation,
                                                              focalLength, objFile.triangles, depthBuffer, lightSource);
         renderScene(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer, lightSource, objFile.vertexNormalMap);
-        // orbit(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
+//        orbit(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
         // Need to render the frame at the end, or nothing actually gets shown on the screen !
         window.renderFrame();
     }

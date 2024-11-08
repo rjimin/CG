@@ -116,38 +116,6 @@ void Draw::drawWireframe(DrawingWindow &window, const glm::vec3 &cameraPosition,
     }
 }
 
-void Draw::drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, DrawingWindow &window, std::vector<std::vector<float>> &depthBuffer) {
-    uint32_t pixelColour = (255 << 24) + (int(colour.red) << 16) + (int(colour.green) << 8) + int(colour.blue);
-
-    float xDiff = to.x - from.x;
-    float yDiff = to.y - from.y;
-    float zDiff = to.depth - from.depth;
-
-    float steps = fmax(abs(xDiff), abs(yDiff));
-    float xStep = xDiff / steps;
-    float yStep = yDiff / steps;
-    float zStep = zDiff / steps;
-
-    float x = from.x;
-    float y = from.y;
-    float depth = from.depth;
-
-    for (float i = 0.0; i <= steps; i++) {
-        int pixelX = static_cast<int>(x);
-        int pixelY = static_cast<int>(y);
-
-        if (pixelX >= 0 && pixelX < WIDTH && pixelY >= 0 && pixelY < HEIGHT) {
-            if (depth > depthBuffer[pixelX][pixelY]) {
-                depthBuffer[pixelX][pixelY] = depth;
-                window.setPixelColour(pixelX, pixelY, pixelColour);
-            }
-        }
-        x += xStep;
-        y += yStep;
-        depth += zStep;
-    }
-}
-
 void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
                                const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer) {
     window.clearPixels();

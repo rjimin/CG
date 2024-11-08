@@ -8,8 +8,8 @@
 #include "LoadFile.h"
 
 std::vector<ModelTriangle> LoadFile::triangles;
-Colour LoadFile::colour;
 std::unordered_map<int, glm::vec3> LoadFile::vertexNormalMap;
+Colour colour;
 std::vector<glm::vec3> vertices;
 
 int LoadFile::getVertexIndex(const glm::vec3& vertex) {

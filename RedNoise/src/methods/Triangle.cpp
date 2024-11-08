@@ -1,7 +1,8 @@
 #include <CanvasTriangle.h>
-#include <Utils.h>
 #include <vector>
 #include <CanvasPoint.h>
+#include <ModelTriangle.h>
+#include "glm/vec3.hpp"
 #include "Constants.h"
 #include "Triangle.h"
 
@@ -26,4 +27,22 @@ CanvasTriangle Triangle::sortVertices(CanvasTriangle triangle) {
     if (v1.y > v2.y) std::swap(v1, v2);
 
     return CanvasTriangle(v0, v1, v2);
+}
+
+glm::vec3 Triangle::calculateCenter(const std::vector<ModelTriangle> &triangles) {
+    glm::vec3 minCoords = glm::vec3(std::numeric_limits<float>::max());
+    glm::vec3 maxCoords = glm::vec3(std::numeric_limits<float>::lowest());
+
+    for (const ModelTriangle &triangle : triangles) {
+        for (const glm::vec3 &vertex : triangle.vertices) {
+            minCoords.x = std::min(minCoords.x, vertex.x);
+            minCoords.y = std::min(minCoords.y, vertex.y);
+            minCoords.z = std::min(minCoords.z, vertex.z);
+
+            maxCoords.x = std::max(maxCoords.x, vertex.x);
+            maxCoords.y = std::max(maxCoords.y, vertex.y);
+            maxCoords.z = std::max(maxCoords.z, vertex.z);
+        }
+    }
+    return (minCoords + maxCoords) / 2.0f;
 }

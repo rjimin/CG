@@ -2,9 +2,41 @@
 #include <DrawingWindow.h>
 #include <CanvasPoint.h>
 #include <Colour.h>
-#include "Draw.h"
 #include "Triangle.h"
+#include "Constants.h"
 #include "ColouredTriangleWithDepth.h"
+
+void drawDepthLine(CanvasPoint from, CanvasPoint to, Colour colour, DrawingWindow &window, std::vector<std::vector<float>> &depthBuffer) {
+    uint32_t pixelColour = (255 << 24) + (int(colour.red) << 16) + (int(colour.green) << 8) + int(colour.blue);
+
+    float xDiff = to.x - from.x;
+    float yDiff = to.y - from.y;
+    float zDiff = to.depth - from.depth;
+
+    float steps = fmax(abs(xDiff), abs(yDiff));
+    float xStep = xDiff / steps;
+    float yStep = yDiff / steps;
+    float zStep = zDiff / steps;
+
+    float x = from.x;
+    float y = from.y;
+    float depth = from.depth;
+
+    for (float i = 0.0; i <= steps; i++) {
+        int pixelX = static_cast<int>(x);
+        int pixelY = static_cast<int>(y);
+
+        if (pixelX >= 0 && pixelX < WIDTH && pixelY >= 0 && pixelY < HEIGHT) {
+            if (depth > depthBuffer[pixelX][pixelY]) {
+                depthBuffer[pixelX][pixelY] = depth;
+                window.setPixelColour(pixelX, pixelY, pixelColour);
+            }
+        }
+        x += xStep;
+        y += yStep;
+        depth += zStep;
+    }
+}
 
 void fillFlatBottomTriangle(CanvasPoint topVertex, CanvasPoint bottomEdgeVertex1, CanvasPoint bottomEdgeVertex2, Colour colour, DrawingWindow &window,
                             std::vector<std::vector<float>> &depthBuffer) {
@@ -24,7 +56,7 @@ void fillFlatBottomTriangle(CanvasPoint topVertex, CanvasPoint bottomEdgeVertex1
         CanvasPoint from = {std::round(currentX1), y, currentDepth1};
         CanvasPoint to = {std::round(currentX2), y, currentDepth2};
 
-        Draw::drawDepthLine(from, to, colour, window, depthBuffer);
+        drawDepthLine(from, to, colour, window, depthBuffer);
 
         currentX1 += stepX1;
         currentX2 += stepX2;
@@ -51,7 +83,7 @@ void fillFlatTopTriangle(CanvasPoint bottomVertex, CanvasPoint topEdgeVertex1, C
         CanvasPoint from = {std::round(currentX1), y, currentDepth1};
         CanvasPoint to = {std::round(currentX2), y, currentDepth2};
 
-        Draw::drawDepthLine(from, to, colour, window, depthBuffer);
+        drawDepthLine(from, to, colour, window, depthBuffer);
 
         currentX1 += stepX1;
         currentX2 += stepX2;
