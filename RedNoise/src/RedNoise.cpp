@@ -140,12 +140,12 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
         else if (event.key.keysym.sym == SDLK_o) isOrbiting = !isOrbiting;
 
         // Translation controls
-        else if (event.key.keysym.sym == SDLK_w) cameraPosition.z -= translationAmount;
-        else if (event.key.keysym.sym == SDLK_s) cameraPosition.z += translationAmount;
+        else if (event.key.keysym.sym == SDLK_w && cameraPosition.y < HEIGHT / 2) cameraPosition.y += translationAmount;
+        else if (event.key.keysym.sym == SDLK_s && cameraPosition.y > - (HEIGHT / 2)) cameraPosition.y -= translationAmount;
         else if (event.key.keysym.sym == SDLK_a && cameraPosition.x > - (WIDTH / 2)) cameraPosition.x -= translationAmount;
         else if (event.key.keysym.sym == SDLK_d && cameraPosition.x < WIDTH / 2) cameraPosition.x += translationAmount;
-        else if (event.key.keysym.sym == SDLK_q && cameraPosition.y < HEIGHT / 2) cameraPosition.y += translationAmount;
-        else if (event.key.keysym.sym == SDLK_e && cameraPosition.y > - (HEIGHT / 2)) cameraPosition.y -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_q) cameraPosition.z -= translationAmount;
+        else if (event.key.keysym.sym == SDLK_e) cameraPosition.z += translationAmount;
 
         // Light controls
         if (event.key.keysym.sym == SDLK_i) lightSource.y += translationAmount;
