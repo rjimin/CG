@@ -29,35 +29,3 @@ std::vector<glm::vec3> Interpolation::interpolateThreeElementValues(glm::vec3 fr
     }
     return result;
 }
-
-std::vector<CanvasPoint> Interpolation::interpolateCanvasPoints(CanvasPoint from, CanvasPoint to, float numberOfValues) {
-    std::vector<CanvasPoint> result;
-
-    float stepX = (to.x - from.x) / (numberOfValues - 1);
-    float stepY = (to.y - from.y) / (numberOfValues - 1);
-
-    for (int i = 0; i < numberOfValues; i++) {
-        CanvasPoint canvasPoints;
-        canvasPoints.x = from.x + stepX * i;
-        canvasPoints.y = from.y + stepY * i;
-
-        result.push_back(canvasPoints);
-    }
-    return result;
-}
-
-std::vector<TexturePoint> Interpolation::interpolateTexturePoints(TexturePoint from, TexturePoint to, float numberOfValues) {
-    std::vector<TexturePoint> result;
-
-    float stepX = (to.x - from.x) / (numberOfValues - 1);
-    float stepY = (to.y - from.y) / (numberOfValues - 1);
-
-    for (int i = 0; i < numberOfValues; i++) {
-        TexturePoint texturePoint;
-        texturePoint.x = from.x + stepX * i;
-        texturePoint.y = from.y + stepY * i;
-
-        result.push_back(texturePoint);
-    }
-    return result;
-}

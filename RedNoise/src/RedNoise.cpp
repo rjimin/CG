@@ -72,7 +72,7 @@ void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &ca
             Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
             break;
         case RAY_TRACED:
-            Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource, vertexNormalMap);
+            Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, lightSource, vertexNormalMap);
             break;
         case IDLE:
         default:

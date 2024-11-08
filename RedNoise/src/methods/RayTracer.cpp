@@ -78,7 +78,11 @@ float RayTracer::calculateBrightness(glm::vec3 &cameraPosition, const glm::vec3 
     return glm::clamp(brightness, 0.0f, 1.0f);
 }
 
-glm::vec3 RayTracer::calculateBarycentricCoords(const glm::vec3 &p, const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) {
+glm::vec3 RayTracer::calculateBarycentricCoords(glm::vec3 p, ModelTriangle triangle) {
+    glm::vec3 a = triangle.vertices[0];
+    glm::vec3 b = triangle.vertices[1];
+    glm::vec3 c = triangle.vertices[2];
+
     glm::vec3 v0 = b - a;
     glm::vec3 v1 = c - a;
     glm::vec3 v2 = p - a;
@@ -95,5 +99,5 @@ glm::vec3 RayTracer::calculateBarycentricCoords(const glm::vec3 &p, const glm::v
     float w = (d00 * d21 - d01 * d20) / denom;
     float u = 1.0f - v - w;
 
-    return glm::vec3(u, v, w);
+    return {u, v, w};
 }

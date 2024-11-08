@@ -5,11 +5,9 @@
 #include <glm/glm.hpp>
 #include <CanvasPoint.h>
 #include <Colour.h>
-#include <TextureMap.h>
 #include <ModelTriangle.h>
 #include "Constants.h"
 #include "Interpolation.h"
-#include "TexturedTriangle.h"
 #include "Projection.h"
 #include "ColouredTriangleWithDepth.h"
 #include "RayTriangleIntersection.h"
@@ -76,24 +74,6 @@ void Draw::drawStrokedTriangle(CanvasTriangle triangle, Colour colour, DrawingWi
     drawLine(triangle.v2(), triangle.v0(), colour, window);
 }
 
-void Draw::drawTexturedLine(CanvasPoint from, CanvasPoint to, TexturePoint fromTP, TexturePoint toTP, TextureMap &textureMap, DrawingWindow &window) {
-    float xDiff = to.x - from.x;
-    float yDiff = to.y - from.y;
-
-    float numberOfSteps = fmax(abs(xDiff), abs(yDiff));
-
-    std::vector<CanvasPoint> canvasPoints = Interpolation::interpolateCanvasPoints(from, to, numberOfSteps);
-    std::vector<TexturePoint> texturePoints = Interpolation::interpolateTexturePoints(fromTP, toTP, numberOfSteps);
-
-    for (float i = 0.0; i < canvasPoints.size(); i++) {
-        CanvasPoint canvasPoint = canvasPoints[i];
-        TexturePoint texturePoint = texturePoints[i];
-
-        uint32_t colour = TexturedTriangle::getTextureColour(texturePoint, textureMap);
-        window.setPixelColour(canvasPoint.x, canvasPoint.y, colour);
-    }
-}
-
 void Draw::drawPoint(DrawingWindow &window, const CanvasPoint &point, Colour colour) {
     uint32_t pointColour = (255 << 24) + (int(colour.red) << 16) + (int(colour.green) << 8) + int(colour.blue);
     window.setPixelColour(point.x, point.y, pointColour);
@@ -138,10 +118,9 @@ void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPos
 }
 
 void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                              const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer,
-                              const glm::vec3 &lightSource, std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+                              const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource,
+                              std::unordered_map<int, glm::vec3> &vertexNormalMap) {
     window.clearPixels();
-    for (std::vector<float> &row: depthBuffer) std::fill(row.begin(), row.end(), 0.0f);
 
     float scalingFactor = 160.0f;
 
@@ -164,10 +143,7 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
                     glm::vec3 normalV1 = vertexNormalMap[indexV1];
                     glm::vec3 normalV2 = vertexNormalMap[indexV2];
 
-                    glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersection.intersectionPoint,
-                                                                                        intersection.intersectedTriangle.vertices[0],
-                                                                                        intersection.intersectedTriangle.vertices[1],
-                                                                                        intersection.intersectedTriangle.vertices[2]);
+                    glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersection.intersectionPoint, intersection.intersectedTriangle);
 
                     glm::vec3 interpolatedNormal = glm::normalize(barycentricCoords.x * normalV0
                                                                   + barycentricCoords.y * normalV1
