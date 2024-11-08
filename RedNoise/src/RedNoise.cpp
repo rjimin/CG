@@ -13,15 +13,16 @@
 #include "methods/LoadFile.h"
 
 bool isOrbiting = false;
+bool clearScreen = false;
 
 enum RenderMode {
-    UNDEFINED,
+    IDLE,
     RASTERISED,
     WIREFRAME,
     RAY_TRACED
 };
 
-RenderMode currentRenderMode = UNDEFINED;
+RenderMode currentRenderMode = IDLE;
 
 glm::mat3 lookAt(const glm::vec3 &cameraPosition, const glm::vec3 &target) {
     glm::vec3 forward = glm::normalize(cameraPosition - target);
@@ -56,25 +57,30 @@ void orbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOr
 void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
                  const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource,
                  std::unordered_map<int, glm::vec3> &vertexNormalMap) {
-    if (currentRenderMode != UNDEFINED) {
-        switch (currentRenderMode) {
-            case RASTERISED:
-                Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
-                break;
-            case WIREFRAME:
-                Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
-                break;
-            case RAY_TRACED:
-                Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource, vertexNormalMap);
-                break;
-            default:
-                break;
-        }
+
+    if (clearScreen) {
+        window.clearPixels();
+        clearScreen = false;
+        return;
+    }
+
+    switch (currentRenderMode) {
+        case RASTERISED:
+            Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+            break;
+        case WIREFRAME:
+            Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+            break;
+        case RAY_TRACED:
+            Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer, lightSource, vertexNormalMap);
+            break;
+        case IDLE:
+        default:
+            break;
     }
 }
 
-void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, glm::vec3 &lightSource) {
+void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, glm::vec3 &lightSource) {
     if (event.type == SDL_KEYDOWN) {
         float translationAmount = 0.1f;
         float rotationAngle = glm::radians(5.0f);
@@ -164,6 +170,10 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
         }
 
         // Render Mode controls
+        else if (event.key.keysym.sym == SDLK_v) {
+            currentRenderMode = IDLE;
+            clearScreen = true;
+        }
         else if (event.key.keysym.sym == SDLK_b) currentRenderMode = WIREFRAME;
         else if (event.key.keysym.sym == SDLK_n) currentRenderMode = RASTERISED;
         else if (event.key.keysym.sym == SDLK_m) currentRenderMode = RAY_TRACED;
@@ -192,8 +202,7 @@ int main(int argc, char *argv[]) {
 
     while (true) {
         // We MUST poll for events - otherwise the window will freeze !
-        if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation,
-                                                             focalLength, objFile.triangles, depthBuffer, lightSource);
+        if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation, lightSource);
         renderScene(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer, lightSource, objFile.vertexNormalMap);
 //        orbit(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
         // Need to render the frame at the end, or nothing actually gets shown on the screen !
