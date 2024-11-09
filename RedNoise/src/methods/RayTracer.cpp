@@ -55,22 +55,39 @@ bool RayTracer::isShadowed(const glm::vec3 &surfacePoint, const glm::vec3 &light
     return intersectionFound && shadowIntersection.distanceFromCamera < lightDistance;
 }
 
-float RayTracer::calculateBrightness(glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
-    float brightness = 0.0f;
-    glm::vec3 lightDirection = glm::normalize(lightSource - intersectionPoint);
-
+float calculateDiffuseLighting(glm::vec3 lightDirection, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
     float distance = glm::length(lightSource - intersectionPoint);
-    float proximityBrightness = 1.0f / (4.0f * M_PI * pow(distance, 2));
+    float proximityLighting = 1.0f / (4.0f * M_PI * pow(distance, 2));
+    proximityLighting = glm::clamp(proximityLighting, 0.0f, 1.0f);
 
-    float AOIBrightness = glm::dot(normal, lightDirection);
+    float AOILighting = glm::dot(normal, lightDirection);
+    AOILighting = glm::clamp(AOILighting, 0.0f, 1.0f);
 
+    float diffuseLighting = proximityLighting + AOILighting;
+    diffuseLighting = glm::clamp(diffuseLighting, 0.0f, 1.0f);
+
+    return diffuseLighting;
+}
+
+float calculateSpecularHighlighting(glm::vec3 lightDirection, glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
     float specularExponent = 256.0f;
     glm::vec3 viewDirection = glm::normalize(cameraPosition - intersectionPoint);
     glm::vec3 reflectionDirection = glm::normalize(lightDirection - 2.0f * normal * glm::dot(lightDirection, normal));
     float specularFactor = glm::dot(viewDirection, reflectionDirection);
-    float specularBrightness = pow(glm::max(specularFactor, 0.0f), specularExponent);
+    float specularHighlighting = pow(glm::max(specularFactor, 0.0f), specularExponent);
+    specularHighlighting = glm::clamp(specularHighlighting, 0.0f, 1.0f);
 
-    brightness = proximityBrightness + AOIBrightness + specularBrightness;
+    return specularHighlighting;
+}
+
+float RayTracer::calculateBrightness(glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
+    glm::vec3 lightDirection = glm::normalize(lightSource - intersectionPoint);
+
+    float diffuseLighting = calculateDiffuseLighting(lightDirection, intersectionPoint, normal, lightSource);
+
+    float specularHighlighting = calculateSpecularHighlighting(lightDirection, cameraPosition, intersectionPoint, normal, lightSource);
+
+    float brightness = diffuseLighting + specularHighlighting;
 
     float ambientThreshold = 0.1f;
     brightness = glm::max(brightness, ambientThreshold);
