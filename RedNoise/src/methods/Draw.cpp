@@ -134,23 +134,18 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
 
             if (RayTracer::intersectionFound) {
                 if (intersection.distanceFromCamera > 0) {
-//                    float brightness = RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
-
-                    float brightness = RayTracer::getGouraudShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
-//                    float brightness = RayTracer::getPhongShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
+                    float shadow = 0.4f;
 
                     bool isShadowed = RayTracer::isShadowed(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
 
-                    uint8_t red, green, blue;
-                    if (isShadowed) {
-                        red = static_cast<uint8_t>((intersection.intersectedTriangle.colour.red / 2) * brightness);
-                        green = static_cast<uint8_t>((intersection.intersectedTriangle.colour.green / 2) * brightness);
-                        blue = static_cast<uint8_t>((intersection.intersectedTriangle.colour.blue / 2) * brightness);
-                    } else {
-                        red = static_cast<uint8_t>(intersection.intersectedTriangle.colour.red * brightness);
-                        green = static_cast<uint8_t>(intersection.intersectedTriangle.colour.green * brightness);
-                        blue = static_cast<uint8_t>(intersection.intersectedTriangle.colour.blue * brightness);
-                    }
+                    float brightness = isShadowed ? shadow :
+                                       RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
+//                                       RayTracer::getGouraudShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
+//                                       RayTracer::getPhongShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
+
+                    uint8_t red = static_cast<uint8_t>(intersection.intersectedTriangle.colour.red * brightness);
+                    uint8_t green = static_cast<uint8_t>(intersection.intersectedTriangle.colour.green * brightness);
+                    uint8_t blue = static_cast<uint8_t>(intersection.intersectedTriangle.colour.blue * brightness);
 
                     uint32_t colour = (255 << 24) + (red << 16) + (green << 8) + blue;
                     window.setPixelColour(x, y, colour);
