@@ -134,22 +134,10 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
 
             if (RayTracer::intersectionFound) {
                 if (intersection.distanceFromCamera > 0) {
+//                    float brightness = RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
 
-                    int indexV0 = LoadFile::getVertexIndex(intersection.intersectedTriangle.vertices[0]);
-                    int indexV1 = LoadFile::getVertexIndex(intersection.intersectedTriangle.vertices[1]);
-                    int indexV2 = LoadFile::getVertexIndex(intersection.intersectedTriangle.vertices[2]);
-
-                    glm::vec3 normalV0 = vertexNormalMap[indexV0];
-                    glm::vec3 normalV1 = vertexNormalMap[indexV1];
-                    glm::vec3 normalV2 = vertexNormalMap[indexV2];
-
-                    glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersection.intersectionPoint, intersection.intersectedTriangle);
-
-                    glm::vec3 interpolatedNormal = glm::normalize(barycentricCoords.x * normalV0
-                                                                  + barycentricCoords.y * normalV1
-                                                                  + barycentricCoords.z * normalV2);
-
-                    float brightness = RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, interpolatedNormal, lightSource);
+                    float brightness = RayTracer::getGouraudShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
+//                    float brightness = RayTracer::getPhongShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
 
                     bool isShadowed = RayTracer::isShadowed(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
 

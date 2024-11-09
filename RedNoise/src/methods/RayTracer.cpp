@@ -1,5 +1,7 @@
 #include <vector>
 #include <RayTriangleIntersection.h>
+#include <unordered_map>
+#include "LoadFile.h"
 #include "RayTracer.h"
 
 bool RayTracer::intersectionFound = false;
@@ -117,4 +119,54 @@ glm::vec3 RayTracer::calculateBarycentricCoords(glm::vec3 p, ModelTriangle trian
     float u = 1.0f - v - w;
 
     return {u, v, w};
+}
+
+std::vector<glm::vec3> getVertexNormal(const ModelTriangle& triangle, std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+    int indexV0 = LoadFile::getVertexIndex(triangle.vertices[0]);
+    int indexV1 = LoadFile::getVertexIndex(triangle.vertices[1]);
+    int indexV2 = LoadFile::getVertexIndex(triangle.vertices[2]);
+
+    glm::vec3 normalV0 = vertexNormalMap[indexV0];
+    glm::vec3 normalV1 = vertexNormalMap[indexV1];
+    glm::vec3 normalV2 = vertexNormalMap[indexV2];
+
+    return {normalV0, normalV1, normalV2};
+}
+
+float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
+                                   std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+    std::vector<glm::vec3> normals = getVertexNormal(triangle, vertexNormalMap);
+    glm::vec3 normalV0 = normals[0];
+    glm::vec3 normalV1 = normals[1];
+    glm::vec3 normalV2 = normals[2];
+
+    glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersectionPoint, triangle);
+
+    float brightnessV0 = RayTracer::calculateBrightness(cameraPosition, triangle.vertices[0], normalV0, lightSource);
+    float brightnessV1 = RayTracer::calculateBrightness(cameraPosition, triangle.vertices[1], normalV1, lightSource);
+    float brightnessV2 = RayTracer::calculateBrightness(cameraPosition, triangle.vertices[2], normalV2, lightSource);
+
+    float interpolatedBrightness = barycentricCoords.x * brightnessV0 +
+                                   barycentricCoords.y * brightnessV1 +
+                                   barycentricCoords.z * brightnessV2;
+
+    return interpolatedBrightness;
+}
+
+float RayTracer::getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
+                                 std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+    std::vector<glm::vec3> normals = getVertexNormal(triangle, vertexNormalMap);
+    glm::vec3 normalV0 = normals[0];
+    glm::vec3 normalV1 = normals[1];
+    glm::vec3 normalV2 = normals[2];
+
+    glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersectionPoint, triangle);
+
+    glm::vec3 interpolatedNormal = glm::normalize(barycentricCoords.x * normalV0
+                                                  + barycentricCoords.y * normalV1
+                                                  + barycentricCoords.z * normalV2);
+
+    float brightness = calculateBrightness(cameraPosition, intersectionPoint, interpolatedNormal, lightSource);
+
+    return brightness;
 }
