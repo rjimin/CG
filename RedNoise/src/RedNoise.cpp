@@ -82,8 +82,8 @@ void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &ca
 
 void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, glm::vec3 &lightSource) {
     if (event.type == SDL_KEYDOWN) {
-        float translationAmount = 0.1f;
-        float rotationAngle = glm::radians(5.0f);
+        float translationAmount = 0.05f;
+        float rotationAngle = glm::radians(2.0f);
 
 //        if (event.key.keysym.sym == SDLK_LEFT) std::cout << "LEFT" << std::endl;
 //        else if (event.key.keysym.sym == SDLK_RIGHT) std::cout << "RIGHT" << std::endl;
@@ -91,7 +91,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
 //        else if (event.key.keysym.sym == SDLK_DOWN) std::cout << "DOWN" << std::endl;
 
         // Rotation controls
-        if (event.key.keysym.sym == SDLK_LEFT) {
+        if (event.key.keysym.sym == SDLK_RIGHT) {
             glm::mat3 rotationY(
                     cos(rotationAngle), 0, sin(rotationAngle),
                     0, 1, 0,
@@ -99,7 +99,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             );
             cameraOrientation = rotationY * cameraOrientation;
         }
-        else if (event.key.keysym.sym == SDLK_RIGHT) {
+        else if (event.key.keysym.sym == SDLK_LEFT) {
             glm::mat3 rotationY(
                     cos(-rotationAngle), 0, sin(-rotationAngle),
                     0, 1, 0,
@@ -107,7 +107,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             );
             cameraOrientation = rotationY * cameraOrientation;
         }
-        else if (event.key.keysym.sym == SDLK_UP) {
+        else if (event.key.keysym.sym == SDLK_DOWN) {
             glm::mat3 rotationX(
                     1, 0, 0,
                     0, cos(rotationAngle), -sin(rotationAngle),
@@ -115,7 +115,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             );
             cameraOrientation = rotationX * cameraOrientation;
         }
-        else if (event.key.keysym.sym == SDLK_DOWN) {
+        else if (event.key.keysym.sym == SDLK_UP) {
             glm::mat3 rotationX(
                     1, 0, 0,
                     0, cos(-rotationAngle), -sin(-rotationAngle),
