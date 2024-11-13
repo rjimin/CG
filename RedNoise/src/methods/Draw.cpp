@@ -132,9 +132,11 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
             RayTriangleIntersection intersection = RayTracer::getClosestIntersection(cameraPosition, rayDirection, triangles, -1);
 
             if (RayTracer::intersectionFound && intersection.distanceFromCamera > 0) {
-                float shadow = RayTracer::calculateSoftShadow(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
+                std::vector<glm::vec3> lightCluster = RayTracer::generateLightCluster(lightSource, 30);
 
-                float brightness = (1.0f - shadow) * RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
+                float shadow = RayTracer::calculateSoftShadow(intersection.intersectionPoint, lightCluster, triangles, intersection.triangleIndex);
+
+                float brightness = (1.0f - shadow) * RayTracer::calculateClusterBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightCluster);
 
                 uint8_t red = static_cast<uint8_t>(intersection.intersectedTriangle.colour.red * brightness);
                 uint8_t green = static_cast<uint8_t>(intersection.intersectedTriangle.colour.green * brightness);

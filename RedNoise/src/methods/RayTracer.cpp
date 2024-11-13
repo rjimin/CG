@@ -82,7 +82,8 @@ float calculateSpecularHighlighting(glm::vec3 lightDirection, glm::vec3 &cameraP
     return specularHighlighting;
 }
 
-float RayTracer::calculateBrightness(glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
+float RayTracer::calculateSinglePointBrightness(glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal,
+                                                const glm::vec3 &lightSource) {
     glm::vec3 lightDirection = glm::normalize(lightSource - intersectionPoint);
 
     float diffuseLighting = calculateDiffuseLighting(lightDirection, intersectionPoint, normal, lightSource);
@@ -95,6 +96,19 @@ float RayTracer::calculateBrightness(glm::vec3 &cameraPosition, const glm::vec3 
     brightness = glm::max(brightness, ambientThreshold);
 
     return glm::clamp(brightness, 0.0f, 1.0f);
+}
+
+float RayTracer::calculateClusterBrightness(glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal,
+                                            const std::vector<glm::vec3> &lightCluster) {
+    float totalBrightness = 0.0f;
+
+    for (const glm::vec3 &light : lightCluster) {
+        float brightness = calculateSinglePointBrightness(cameraPosition, intersectionPoint, normal, light);
+        totalBrightness += brightness;
+    }
+    totalBrightness /= lightCluster.size();
+
+    return totalBrightness;
 }
 
 glm::vec3 RayTracer::calculateBarycentricCoords(glm::vec3 p, ModelTriangle triangle) {
@@ -142,9 +156,9 @@ float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &l
 
     glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersectionPoint, triangle);
 
-    float brightnessV0 = RayTracer::calculateBrightness(cameraPosition, triangle.vertices[0], normalV0, lightSource);
-    float brightnessV1 = RayTracer::calculateBrightness(cameraPosition, triangle.vertices[1], normalV1, lightSource);
-    float brightnessV2 = RayTracer::calculateBrightness(cameraPosition, triangle.vertices[2], normalV2, lightSource);
+    float brightnessV0 = RayTracer::calculateSinglePointBrightness(cameraPosition, triangle.vertices[0], normalV0, lightSource);
+    float brightnessV1 = RayTracer::calculateSinglePointBrightness(cameraPosition, triangle.vertices[1], normalV1, lightSource);
+    float brightnessV2 = RayTracer::calculateSinglePointBrightness(cameraPosition, triangle.vertices[2], normalV2, lightSource);
 
     float interpolatedBrightness = barycentricCoords.x * brightnessV0 +
                                    barycentricCoords.y * brightnessV1 +
@@ -166,12 +180,12 @@ float RayTracer::getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lig
                                                   + barycentricCoords.y * normalV1
                                                   + barycentricCoords.z * normalV2);
 
-    float brightness = calculateBrightness(cameraPosition, intersectionPoint, interpolatedNormal, lightSource);
+    float brightness = calculateSinglePointBrightness(cameraPosition, intersectionPoint, interpolatedNormal, lightSource);
 
     return brightness;
 }
 
-std::vector<glm::vec3> generateLightCluster(const glm::vec3 &lightSource, int numLightPoints) {
+std::vector<glm::vec3> RayTracer::generateLightCluster(const glm::vec3 &lightSource, int numLightPoints) {
     std::vector<glm::vec3> lightCluster;
 
     lightCluster.push_back(lightSource);
@@ -203,10 +217,8 @@ std::vector<glm::vec3> generateLightCluster(const glm::vec3 &lightSource, int nu
     return lightCluster;
 }
 
-float RayTracer::calculateSoftShadow(const glm::vec3 &surfacePoint, const glm::vec3 &lightSource,
+float RayTracer::calculateSoftShadow(const glm::vec3 &surfacePoint, const std::vector<glm::vec3> &lightCluster,
                                      const std::vector<ModelTriangle> &triangles, size_t triangleIndex) {
-    std::vector<glm::vec3> lightCluster = generateLightCluster(lightSource, 40);
-
     int totalShadows = 0;
     for (const glm::vec3 &light : lightCluster) {
         if (isShadowed(surfacePoint, light, triangles, triangleIndex)) {
