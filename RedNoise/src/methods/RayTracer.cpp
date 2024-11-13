@@ -170,3 +170,48 @@ float RayTracer::getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lig
 
     return brightness;
 }
+
+std::vector<glm::vec3> generateLightCluster(const glm::vec3 &lightSource, int numLightPoints) {
+    std::vector<glm::vec3> lightCluster;
+
+    lightCluster.push_back(lightSource);
+
+    int layers = std::sqrt(numLightPoints);
+    int remainingPoints = numLightPoints;
+    float radiusStep = 0.1f;
+    float zStep = 0.05f;
+
+    for (int layer = 1; layer <= layers; layer++) {
+        int pointsPerLayer = std::max(1, remainingPoints / (layers - layer + 1));
+        remainingPoints -= pointsPerLayer;
+
+        float radius = layer * radiusStep;
+        float angleStep = 2.0f * M_PI / pointsPerLayer;
+        float zOffset = (layer - layers / 2.0f) * zStep;
+
+        for (int i = 0; i < pointsPerLayer; ++i) {
+            float angle = i * angleStep;
+
+            glm::vec3 point;
+            point.x = lightSource.x + radius * std::cos(angle);
+            point.y = lightSource.y + radius * std::sin(angle);
+            point.z = lightSource.z + zOffset;
+
+            lightCluster.push_back(point);
+        }
+    }
+    return lightCluster;
+}
+
+float RayTracer::calculateSoftShadow(const glm::vec3 &surfacePoint, const glm::vec3 &lightSource,
+                                     const std::vector<ModelTriangle> &triangles, size_t triangleIndex) {
+    std::vector<glm::vec3> lightCluster = generateLightCluster(lightSource, 40);
+
+    int totalShadows = 0;
+    for (const glm::vec3 &light : lightCluster) {
+        if (isShadowed(surfacePoint, light, triangles, triangleIndex)) {
+            totalShadows++;
+        }
+    }
+    return static_cast<float>(totalShadows) / lightCluster.size();
+}

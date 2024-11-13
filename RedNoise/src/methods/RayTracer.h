@@ -15,4 +15,6 @@ public:
                                    std::unordered_map<int, glm::vec3> &vertexNormalMap);
     static float getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
                                  std::unordered_map<int, glm::vec3> &vertexNormalMap);
+    static float calculateSoftShadow(const glm::vec3 &surfacePoint, const glm::vec3 &lightSource,
+                                     const std::vector<ModelTriangle> &triangles, size_t triangleIndex);
 };

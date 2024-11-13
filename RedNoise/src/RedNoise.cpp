@@ -22,7 +22,7 @@ enum RenderMode {
     RAY_TRACED
 };
 
-RenderMode currentRenderMode = IDLE;
+RenderMode currentRenderMode = RASTERISED;
 
 glm::mat3 lookAt(const glm::vec3 &cameraPosition, const glm::vec3 &target) {
     glm::vec3 forward = glm::normalize(cameraPosition - target);
@@ -55,8 +55,7 @@ void orbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOr
 }
 
 void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource,
-                 std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer, const glm::vec3 &lightSource) {
 
     if (clearScreen) {
         window.clearPixels();
@@ -72,7 +71,7 @@ void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &ca
             Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
             break;
         case RAY_TRACED:
-            Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, lightSource, vertexNormalMap);
+            Draw::drawRayTracedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, lightSource);
             break;
         case IDLE:
         default:
@@ -203,8 +202,10 @@ int main(int argc, char *argv[]) {
     while (true) {
         // We MUST poll for events - otherwise the window will freeze !
         if (window.pollForInputEvents(event)) handleEvent(event, window, cameraPosition, cameraOrientation, lightSource);
-        renderScene(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer, lightSource, objFile.vertexNormalMap);
-//        orbit(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
+
+        renderScene(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer, lightSource);
+
+        if (isOrbiting) orbit(window, cameraPosition, cameraOrientation, focalLength, objFile.triangles, depthBuffer);
         // Need to render the frame at the end, or nothing actually gets shown on the screen !
         window.renderFrame();
     }

@@ -19,6 +19,5 @@ public:
     static void drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPosition, const glm::mat3 &cameraOrientation, float focalLength,
                                 const std::vector<ModelTriangle> &triangles, std::vector<std::vector<float>> &depthBuffer);
     static void drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                                   const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource,
-                                   std::unordered_map<int, glm::vec3> &vertexNormalMap);
+                                   const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource);
 };

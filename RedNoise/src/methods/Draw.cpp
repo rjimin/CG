@@ -118,8 +118,7 @@ void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPos
 }
 
 void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                              const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource,
-                              std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+                              const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource) {
     window.clearPixels();
 
     float scalingFactor = 160.0f;
@@ -132,24 +131,17 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
 
             RayTriangleIntersection intersection = RayTracer::getClosestIntersection(cameraPosition, rayDirection, triangles, -1);
 
-            if (RayTracer::intersectionFound) {
-                if (intersection.distanceFromCamera > 0) {
-                    float shadow = 0.4f;
+            if (RayTracer::intersectionFound && intersection.distanceFromCamera > 0) {
+                float shadow = RayTracer::calculateSoftShadow(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
 
-                    bool isShadowed = RayTracer::isShadowed(intersection.intersectionPoint, lightSource, triangles, intersection.triangleIndex);
+                float brightness = (1.0f - shadow) * RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
 
-                    float brightness = isShadowed ? shadow :
-                                       RayTracer::calculateBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightSource);
-//                                       RayTracer::getGouraudShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
-//                                       RayTracer::getPhongShading(cameraPosition, lightSource, intersection.intersectionPoint, intersection.intersectedTriangle, vertexNormalMap);
+                uint8_t red = static_cast<uint8_t>(intersection.intersectedTriangle.colour.red * brightness);
+                uint8_t green = static_cast<uint8_t>(intersection.intersectedTriangle.colour.green * brightness);
+                uint8_t blue = static_cast<uint8_t>(intersection.intersectedTriangle.colour.blue * brightness);
 
-                    uint8_t red = static_cast<uint8_t>(intersection.intersectedTriangle.colour.red * brightness);
-                    uint8_t green = static_cast<uint8_t>(intersection.intersectedTriangle.colour.green * brightness);
-                    uint8_t blue = static_cast<uint8_t>(intersection.intersectedTriangle.colour.blue * brightness);
-
-                    uint32_t colour = (255 << 24) + (red << 16) + (green << 8) + blue;
-                    window.setPixelColour(x, y, colour);
-                }
+                uint32_t colour = (255 << 24) + (red << 16) + (green << 8) + blue;
+                window.setPixelColour(x, y, colour);
             }
         }
     }
