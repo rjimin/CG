@@ -117,8 +117,56 @@ void Draw::drawRasterisedScene(DrawingWindow &window, const glm::vec3 &cameraPos
     }
 }
 
+uint32_t calculateColour(const Colour &trigColour, float brightness) {
+    uint8_t red = static_cast<uint8_t>(trigColour.red * brightness);
+    uint8_t green = static_cast<uint8_t>(trigColour.green * brightness);
+    uint8_t blue = static_cast<uint8_t>(trigColour.blue * brightness);
+
+    uint32_t colour = (255 << 24) + (red << 16) + (green << 8) + blue;
+
+    return colour;
+}
+
+uint32_t calculateReflectedColour(glm::vec3 &cameraPosition, glm::vec3 rayDirection, const std::vector<ModelTriangle> &triangles,
+                                  glm::vec3 intersectionPoint, const ModelTriangle& triangle, size_t triangleIndex,
+                                  float shadow, float brightness, const std::vector<glm::vec3> &lightCluster) {
+    glm::vec3 reflectedDirection = glm::normalize(rayDirection - 2.0f * glm::dot(rayDirection, triangle.normal) * triangle.normal);
+
+    RayTriangleIntersection reflectionIntersection =
+            RayTracer::getClosestIntersection(intersectionPoint + reflectedDirection * 0.001f, reflectedDirection,
+                                              triangles, triangleIndex);
+
+    if (RayTracer::intersectionFound && reflectionIntersection.distanceFromCamera > 0) {
+        float reflectionBrightness =
+                (1.0f - shadow) * RayTracer::calculateClusterBrightness(cameraPosition,
+                                                                        reflectionIntersection.intersectionPoint,
+                                                                        reflectionIntersection.intersectedTriangle.normal,
+                                                                        lightCluster);
+        return calculateColour(reflectionIntersection.intersectedTriangle.colour, reflectionBrightness);
+    } else {
+        return calculateColour(triangle.colour, brightness);
+    }
+}
+
+uint32_t drawPixelColour(glm::vec3 &cameraPosition, glm::vec3 &rayDirection, const std::vector<ModelTriangle> &triangles,
+                         glm::vec3 intersectionPoint, const ModelTriangle& triangle, size_t triangleIndex,
+                         const glm::vec3 &lightSource, std::unordered_map<int, std::string> &materialMap) {
+    std::vector<glm::vec3> lightCluster = RayTracer::generateLightCluster(lightSource, 30);
+    float shadow = RayTracer::calculateSoftShadow(intersectionPoint, lightCluster, triangles, triangleIndex);
+    float brightness = (1.0f - shadow) * RayTracer::calculateClusterBrightness(cameraPosition, intersectionPoint, triangle.normal, lightCluster);
+
+    int trigIndex = LoadFile::getTriangleIndex(triangle);
+    if (materialMap[trigIndex] == "Mirror") {
+        return calculateReflectedColour(cameraPosition, rayDirection, triangles, intersectionPoint, triangle,
+                                        triangleIndex, shadow, brightness, lightCluster);
+    } else {
+        return calculateColour(triangle.colour, brightness);
+    }
+}
+
 void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                              const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource) {
+                              const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource,
+                              std::unordered_map<int, glm::vec3> &vertexNormalMap, std::unordered_map<int, std::string> materialMap) {
     window.clearPixels();
 
     float scalingFactor = 160.0f;
@@ -132,17 +180,8 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
             RayTriangleIntersection intersection = RayTracer::getClosestIntersection(cameraPosition, rayDirection, triangles, -1);
 
             if (RayTracer::intersectionFound && intersection.distanceFromCamera > 0) {
-                std::vector<glm::vec3> lightCluster = RayTracer::generateLightCluster(lightSource, 30);
-
-                float shadow = RayTracer::calculateSoftShadow(intersection.intersectionPoint, lightCluster, triangles, intersection.triangleIndex);
-
-                float brightness = (1.0f - shadow) * RayTracer::calculateClusterBrightness(cameraPosition, intersection.intersectionPoint, intersection.intersectedTriangle.normal, lightCluster);
-
-                uint8_t red = static_cast<uint8_t>(intersection.intersectedTriangle.colour.red * brightness);
-                uint8_t green = static_cast<uint8_t>(intersection.intersectedTriangle.colour.green * brightness);
-                uint8_t blue = static_cast<uint8_t>(intersection.intersectedTriangle.colour.blue * brightness);
-
-                uint32_t colour = (255 << 24) + (red << 16) + (green << 8) + blue;
+                uint32_t colour = drawPixelColour(cameraPosition, rayDirection, triangles, intersection.intersectionPoint,
+                                                  intersection.intersectedTriangle, intersection.triangleIndex, lightSource, materialMap);
                 window.setPixelColour(x, y, colour);
             }
         }

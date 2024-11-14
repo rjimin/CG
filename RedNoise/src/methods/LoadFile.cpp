@@ -9,12 +9,24 @@
 
 std::vector<ModelTriangle> LoadFile::triangles;
 std::unordered_map<int, glm::vec3> LoadFile::vertexNormalMap;
+std::unordered_map<int, std::string> LoadFile::materialMap;
 Colour colour;
 std::vector<glm::vec3> vertices;
 
-int LoadFile::getVertexIndex(const glm::vec3& vertex) {
+int LoadFile::getVertexIndex(const glm::vec3 &vertex) {
     for (size_t i = 0; i < vertices.size(); ++i) {
         if (vertices[i] == vertex) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+int LoadFile::getTriangleIndex(const ModelTriangle &triangle) {
+    for (size_t i = 0; i < triangles.size(); ++i) {
+        if (triangles[i].vertices[0] == triangle.vertices[0]
+         && triangles[i].vertices[1] == triangle.vertices[1]
+         && triangles[i].vertices[2] == triangle.vertices[2]) {
             return static_cast<int>(i);
         }
     }
@@ -62,7 +74,7 @@ std::unordered_map<std::string, glm::vec3> loadMaterials() {
 
 void LoadFile::loadObj() {
     std::unordered_map<std::string, glm::vec3> colourMap = loadMaterials();
-    std::ifstream objFile("models/cornell-box.obj");
+    std::ifstream objFile("models/cornell-box-mirror.obj");
 
     if (!objFile.is_open()) {
         std::cerr << "Error: Could not open OBJ file" << std::endl;
@@ -73,6 +85,8 @@ void LoadFile::loadObj() {
     std::unordered_map<int, std::vector<int>> vertexFaceMap;
 
     int faceIndex = 0;
+
+    std::string material;
 
     while (getline(objFile, line)) {
         if(line.empty()) continue;
@@ -120,13 +134,13 @@ void LoadFile::loadObj() {
             }
 
             triangles.push_back(triangle);
+            materialMap[faceIndex] = material;
             faceIndex++;
         }
         else if (identifier == "usemtl") {
-            std::string colourName;
-            lineStream >> colourName;
-            if (colourMap.find(colourName) != colourMap.end()) {
-                glm::vec3 rgb = colourMap[colourName];
+            lineStream >> material;
+            if (colourMap.find(material) != colourMap.end()) {
+                glm::vec3 rgb = colourMap[material];
                 colour = Colour(rgb.r * 255, rgb.g * 255, rgb.b * 255);
             }
         }
