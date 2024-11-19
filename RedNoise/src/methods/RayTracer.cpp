@@ -53,7 +53,10 @@ RayTriangleIntersection RayTracer::getClosestIntersection(glm::vec3 cameraPositi
 bool RayTracer::isShadowed(const glm::vec3 &surfacePoint, const glm::vec3 &lightSource, const std::vector<ModelTriangle> &triangles, size_t triangleIndex) {
     glm::vec3 shadowRayDirection = glm::normalize(lightSource - surfacePoint);
     float lightDistance = glm::length(lightSource - surfacePoint);
-    RayTriangleIntersection shadowIntersection = getClosestIntersection(surfacePoint, shadowRayDirection, triangles, triangleIndex);
+    glm::vec3 offsetPoint = surfacePoint + shadowRayDirection * 1e-4f;
+
+    RayTriangleIntersection shadowIntersection = getClosestIntersection(offsetPoint, shadowRayDirection, triangles, triangleIndex);
+
     return intersectionFound && shadowIntersection.distanceFromCamera < lightDistance;
 }
 
