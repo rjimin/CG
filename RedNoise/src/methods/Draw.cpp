@@ -133,7 +133,7 @@ uint32_t calculateReflectedColour(glm::vec3 &cameraPosition, glm::vec3 rayDirect
     glm::vec3 reflectedDirection = glm::normalize(rayDirection - 2.0f * glm::dot(rayDirection, triangle.normal) * triangle.normal);
 
     RayTriangleIntersection reflectionIntersection =
-            RayTracer::getClosestIntersection(intersectionPoint + reflectedDirection * 0.001f, reflectedDirection,
+            RayTracer::getClosestIntersection(intersectionPoint + reflectedDirection * 1e-4f, reflectedDirection,
                                               triangles, triangleIndex);
 
     if (RayTracer::intersectionFound && reflectionIntersection.distanceFromCamera > 0) {

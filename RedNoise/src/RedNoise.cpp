@@ -174,9 +174,18 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             currentRenderMode = IDLE;
             clearScreen = true;
         }
-        else if (event.key.keysym.sym == SDLK_b) currentRenderMode = WIREFRAME;
-        else if (event.key.keysym.sym == SDLK_n) currentRenderMode = RASTERISED;
-        else if (event.key.keysym.sym == SDLK_m) currentRenderMode = RAY_TRACED;
+        else if (event.key.keysym.sym == SDLK_b) {
+            std::cout << "Load Wireframe Scene" << std::endl;
+            currentRenderMode = WIREFRAME;
+        }
+        else if (event.key.keysym.sym == SDLK_n) {
+            std::cout << "Load Rasterised Scene" << std::endl;
+            currentRenderMode = RASTERISED;
+        }
+        else if (event.key.keysym.sym == SDLK_m) {
+            std::cout << "Load Ray Traced Scene" << std::endl;
+            currentRenderMode = RAY_TRACED;
+        }
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN) {
         window.savePPM("output.ppm");
@@ -198,7 +207,7 @@ int main(int argc, char *argv[]) {
 
     float focalLength = 2.0;
 
-    glm::vec3 lightSource = {0.0, 0.7, 0.0};
+    glm::vec3 lightSource = {0.0, 0.6, 0.8};
 
     while (true) {
         // We MUST poll for events - otherwise the window will freeze !

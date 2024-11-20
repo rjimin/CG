@@ -74,7 +74,7 @@ std::unordered_map<std::string, glm::vec3> loadMaterials() {
 
 void LoadFile::loadObj() {
     std::unordered_map<std::string, glm::vec3> colourMap = loadMaterials();
-    std::ifstream objFile("models/cornell-box-mirror.obj");
+    std::ifstream objFile("models/cornell-box-sphere-metal.obj");
 
     if (!objFile.is_open()) {
         std::cerr << "Error: Could not open OBJ file" << std::endl;

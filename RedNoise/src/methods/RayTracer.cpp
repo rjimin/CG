@@ -50,14 +50,21 @@ RayTriangleIntersection RayTracer::getClosestIntersection(glm::vec3 cameraPositi
     return closestIntersection;
 }
 
-bool RayTracer::isShadowed(const glm::vec3 &surfacePoint, const glm::vec3 &lightSource, const std::vector<ModelTriangle> &triangles, size_t triangleIndex) {
+float RayTracer::calculateShadowFactor(const glm::vec3 &surfacePoint, const glm::vec3 &lightSource, const std::vector<ModelTriangle> &triangles, size_t triangleIndex) {
     glm::vec3 shadowRayDirection = glm::normalize(lightSource - surfacePoint);
     float lightDistance = glm::length(lightSource - surfacePoint);
     glm::vec3 offsetPoint = surfacePoint + shadowRayDirection * 1e-4f;
 
     RayTriangleIntersection shadowIntersection = getClosestIntersection(offsetPoint, shadowRayDirection, triangles, triangleIndex);
 
-    return intersectionFound && shadowIntersection.distanceFromCamera < lightDistance;
+    if (!intersectionFound) {
+        return 0.0f;
+    }
+    if (shadowIntersection.distanceFromCamera < lightDistance) {
+        return 1.0f;
+    }
+    float shadowFactor = 1.0f - (shadowIntersection.distanceFromCamera / lightDistance);
+    return glm::clamp(shadowFactor, 0.0f, 1.0f);
 }
 
 float calculateDiffuseLighting(glm::vec3 lightDirection, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
@@ -150,8 +157,8 @@ std::vector<glm::vec3> getVertexNormal(const ModelTriangle& triangle, std::unord
     return {normalV0, normalV1, normalV2};
 }
 
-float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
-                                   std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
+                                   const std::vector<glm::vec3> &lightCluster, std::unordered_map<int, glm::vec3> &vertexNormalMap) {
     std::vector<glm::vec3> normals = getVertexNormal(triangle, vertexNormalMap);
     glm::vec3 normalV0 = normals[0];
     glm::vec3 normalV1 = normals[1];
@@ -159,9 +166,9 @@ float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &l
 
     glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersectionPoint, triangle);
 
-    float brightnessV0 = RayTracer::calculateSinglePointBrightness(cameraPosition, triangle.vertices[0], normalV0, lightSource);
-    float brightnessV1 = RayTracer::calculateSinglePointBrightness(cameraPosition, triangle.vertices[1], normalV1, lightSource);
-    float brightnessV2 = RayTracer::calculateSinglePointBrightness(cameraPosition, triangle.vertices[2], normalV2, lightSource);
+    float brightnessV0 = RayTracer::calculateClusterBrightness(cameraPosition, triangle.vertices[0], normalV0, lightCluster);
+    float brightnessV1 = RayTracer::calculateClusterBrightness(cameraPosition, triangle.vertices[1], normalV1, lightCluster);
+    float brightnessV2 = RayTracer::calculateClusterBrightness(cameraPosition, triangle.vertices[2], normalV2, lightCluster);
 
     float interpolatedBrightness = barycentricCoords.x * brightnessV0 +
                                    barycentricCoords.y * brightnessV1 +
@@ -170,8 +177,8 @@ float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &l
     return interpolatedBrightness;
 }
 
-float RayTracer::getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
-                                 std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+float RayTracer::getPhongShading(glm::vec3 &cameraPosition, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
+                                 const std::vector<glm::vec3> &lightCluster, std::unordered_map<int, glm::vec3> &vertexNormalMap) {
     std::vector<glm::vec3> normals = getVertexNormal(triangle, vertexNormalMap);
     glm::vec3 normalV0 = normals[0];
     glm::vec3 normalV1 = normals[1];
@@ -179,11 +186,11 @@ float RayTracer::getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lig
 
     glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersectionPoint, triangle);
 
-    glm::vec3 interpolatedNormal = glm::normalize(barycentricCoords.x * normalV0
-                                                  + barycentricCoords.y * normalV1
-                                                  + barycentricCoords.z * normalV2);
+    glm::vec3 interpolatedNormal = glm::normalize(barycentricCoords.x * normalV0 +
+                                                     barycentricCoords.y * normalV1 +
+                                                     barycentricCoords.z * normalV2);
 
-    float brightness = calculateSinglePointBrightness(cameraPosition, intersectionPoint, interpolatedNormal, lightSource);
+    float brightness = calculateClusterBrightness(cameraPosition, intersectionPoint, interpolatedNormal, lightCluster);
 
     return brightness;
 }
@@ -222,11 +229,11 @@ std::vector<glm::vec3> RayTracer::generateLightCluster(const glm::vec3 &lightSou
 
 float RayTracer::calculateSoftShadow(const glm::vec3 &surfacePoint, const std::vector<glm::vec3> &lightCluster,
                                      const std::vector<ModelTriangle> &triangles, size_t triangleIndex) {
-    int totalShadows = 0;
+    float shadowTotal = 0.0f;
+
     for (const glm::vec3 &light : lightCluster) {
-        if (isShadowed(surfacePoint, light, triangles, triangleIndex)) {
-            totalShadows++;
-        }
+        float shadowFactor = calculateShadowFactor(surfacePoint, light, triangles, triangleIndex);
+        shadowTotal += shadowFactor;
     }
-    return static_cast<float>(totalShadows) / lightCluster.size();
+    return shadowTotal / static_cast<float>(lightCluster.size());
 }
