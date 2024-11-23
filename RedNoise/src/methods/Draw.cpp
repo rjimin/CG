@@ -128,7 +128,7 @@ uint32_t calculateColour(const Colour &trigColour, float brightness) {
     return colour;
 }
 
-uint32_t calculateTextureColour(glm::vec3 intersectionPoint, const ModelTriangle& triangle, float brightness, std::string material) {
+uint32_t calculateTextureColour(glm::vec3 intersectionPoint, const ModelTriangle& triangle, float brightness, const std::string &material) {
     TextureMap texture = LoadFile::textureMaps[material];
 
     glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersectionPoint, triangle);
@@ -190,8 +190,7 @@ uint32_t calculateMirrorColour(glm::vec3 &cameraPosition, glm::vec3 rayDirection
 }
 
 uint32_t drawPixelColour(glm::vec3 &cameraPosition, glm::vec3 &rayDirection, const std::vector<ModelTriangle> &triangles,
-                         glm::vec3 intersectionPoint, const ModelTriangle& triangle, size_t triangleIndex,
-                         const glm::vec3 &lightSource, std::unordered_map<int, std::string> &materialMap) {
+                         glm::vec3 intersectionPoint, const ModelTriangle& triangle, size_t triangleIndex, const glm::vec3 &lightSource) {
     std::vector<glm::vec3> lightCluster = RayTracer::generateLightCluster(lightSource, 30);
     float shadow = RayTracer::calculateSoftShadow(intersectionPoint, lightCluster, triangles, triangleIndex);
     float brightness = (1.0f - shadow) * RayTracer::calculateClusterBrightness(cameraPosition, intersectionPoint, triangle.normal, lightCluster);
@@ -211,8 +210,7 @@ uint32_t drawPixelColour(glm::vec3 &cameraPosition, glm::vec3 &rayDirection, con
 }
 
 void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
-                              const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource,
-                              std::unordered_map<int, glm::vec3> &vertexNormalMap, std::unordered_map<int, std::string> materialMap) {
+                              const std::vector<ModelTriangle> &triangles, const glm::vec3 &lightSource) {
     window.clearPixels();
 
     float scalingFactor = 160.0f;
@@ -227,7 +225,7 @@ void Draw::drawRayTracedScene(DrawingWindow &window, glm::vec3 &cameraPosition, 
 
             if (RayTracer::intersectionFound && intersection.distanceFromCamera > 0) {
                 uint32_t colour = drawPixelColour(cameraPosition, rayDirection, triangles, intersection.intersectionPoint,
-                                                  intersection.intersectedTriangle, intersection.triangleIndex, lightSource, materialMap);
+                                                  intersection.intersectedTriangle, intersection.triangleIndex, lightSource);
                 window.setPixelColour(x, y, colour);
             }
         }

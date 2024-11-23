@@ -145,21 +145,20 @@ glm::vec3 RayTracer::calculateBarycentricCoords(glm::vec3 p, ModelTriangle trian
     return {u, v, w};
 }
 
-std::vector<glm::vec3> getVertexNormal(const ModelTriangle& triangle, std::unordered_map<int, glm::vec3> &vertexNormalMap) {
+std::vector<glm::vec3> getVertexNormal(const ModelTriangle& triangle) {
     int indexV0 = LoadFile::getVertexIndex(triangle.vertices[0]);
     int indexV1 = LoadFile::getVertexIndex(triangle.vertices[1]);
     int indexV2 = LoadFile::getVertexIndex(triangle.vertices[2]);
 
-    glm::vec3 normalV0 = vertexNormalMap[indexV0];
-    glm::vec3 normalV1 = vertexNormalMap[indexV1];
-    glm::vec3 normalV2 = vertexNormalMap[indexV2];
+    glm::vec3 normalV0 = LoadFile::vertexNormalMap[indexV0];
+    glm::vec3 normalV1 = LoadFile::vertexNormalMap[indexV1];
+    glm::vec3 normalV2 = LoadFile::vertexNormalMap[indexV2];
 
     return {normalV0, normalV1, normalV2};
 }
 
-float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
-                                   std::unordered_map<int, glm::vec3> &vertexNormalMap) {
-    std::vector<glm::vec3> normals = getVertexNormal(triangle, vertexNormalMap);
+float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle) {
+    std::vector<glm::vec3> normals = getVertexNormal(triangle);
     glm::vec3 normalV0 = normals[0];
     glm::vec3 normalV1 = normals[1];
     glm::vec3 normalV2 = normals[2];
@@ -177,9 +176,8 @@ float RayTracer::getGouraudShading(glm::vec3 &cameraPosition, const glm::vec3 &l
     return interpolatedBrightness;
 }
 
-float RayTracer::getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle,
-                                 std::unordered_map<int, glm::vec3> &vertexNormalMap) {
-    std::vector<glm::vec3> normals = getVertexNormal(triangle, vertexNormalMap);
+float RayTracer::getPhongShading(glm::vec3 &cameraPosition, const glm::vec3 &lightSource, glm::vec3 intersectionPoint, const ModelTriangle& triangle) {
+    std::vector<glm::vec3> normals = getVertexNormal(triangle);
     glm::vec3 normalV0 = normals[0];
     glm::vec3 normalV1 = normals[1];
     glm::vec3 normalV2 = normals[2];
