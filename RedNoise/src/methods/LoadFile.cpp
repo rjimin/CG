@@ -5,13 +5,17 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <sstream>
+#include "Constants.h"
 #include "LoadFile.h"
 
 std::vector<ModelTriangle> LoadFile::triangles;
 std::unordered_map<int, glm::vec3> LoadFile::vertexNormalMap;
 std::unordered_map<int, std::string> LoadFile::materialMap;
+std::unordered_map<std::string, TextureMap> LoadFile::textureMaps;
+
 Colour colour;
 std::vector<glm::vec3> vertices;
+std::vector<glm::vec2> texturePoints;
 
 int LoadFile::getVertexIndex(const glm::vec3 &vertex) {
     for (size_t i = 0; i < vertices.size(); ++i) {
@@ -34,7 +38,7 @@ int LoadFile::getTriangleIndex(const ModelTriangle &triangle) {
 }
 
 std::unordered_map<std::string, glm::vec3> loadMaterials() {
-    std::ifstream mtlFile("models/cornell-box.mtl");
+    std::ifstream mtlFile(baseDirectory + "cornell-box.mtl");
 
     if (!mtlFile.is_open()) {
         std::cerr << "Error: Could not open MTL file" << std::endl;
@@ -43,7 +47,7 @@ std::unordered_map<std::string, glm::vec3> loadMaterials() {
 
     std::string line;
     std::unordered_map<std::string, glm::vec3> colourMap;
-    std::string colourName;
+    std::string material;
 
     while (getline(mtlFile, line)) {
         if (line.empty()) continue;
@@ -52,19 +56,26 @@ std::unordered_map<std::string, glm::vec3> loadMaterials() {
         std::string identifier;
         lineStream >> identifier;
 
-        if (identifier == "Kd") {
+        if (identifier == "newmtl") {
+            lineStream >> material;
+        }
+        else if (identifier == "Kd") {
             float r, g, b;
             lineStream >> r >> g >> b;
 
             glm::vec3 rgb(r, g, b);
 
-            if (!colourName.empty()) {
-                colourMap[colourName] = rgb;
-                colourName.clear();
+            if (!material.empty()) {
+                colourMap[material] = rgb;
             }
         }
-        else if (identifier == "newmtl") {
-            lineStream >> colourName;
+        else if (identifier == "map_Kd") {
+            std::string textureFilename;
+            lineStream >> textureFilename;
+
+            if (!textureFilename.empty() && !material.empty()) {
+                LoadFile::textureMaps[material] = TextureMap(baseDirectory + textureFilename);
+            }
         }
     }
     mtlFile.close();
@@ -74,7 +85,7 @@ std::unordered_map<std::string, glm::vec3> loadMaterials() {
 
 void LoadFile::loadObj() {
     std::unordered_map<std::string, glm::vec3> colourMap = loadMaterials();
-    std::ifstream objFile("models/cornell-box-sphere-metal.obj");
+    std::ifstream objFile(baseDirectory + "cornell-box.obj");
 
     if (!objFile.is_open()) {
         std::cerr << "Error: Could not open OBJ file" << std::endl;
@@ -102,40 +113,70 @@ void LoadFile::loadObj() {
             glm::vec3 vertex(x * scalingFactor, y * scalingFactor, z * scalingFactor);
             vertices.push_back(vertex);
         }
+        else if (identifier == "vt") {
+            float u, v;
+            lineStream >> u >> v;
+            texturePoints.emplace_back(u, v);
+        }
         else if (identifier == "f") {
-            int indexV1, indexV2, indexV3;
-            char slash;
-            lineStream >> indexV1 >> slash >> indexV2 >> slash >> indexV3;
+            std::vector<int> vertexIndices, textureIndices;
+            std::string faceElement;
 
-            ModelTriangle triangle(vertices[indexV1 - 1], vertices[indexV2 - 1], vertices[indexV3 - 1], colour);
+            while (lineStream >> faceElement) {
+                std::istringstream faceStream(faceElement);
+                std::string vertexIndex, textureIndex;
 
-            glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
-            glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
-            triangle.normal = glm::normalize(glm::cross(e0, e1));
+                std::getline(faceStream, vertexIndex, '/');
+                vertexIndices.push_back(std::stoi(vertexIndex) - 1);
 
-            int findIndexV1 = getVertexIndex(vertices[indexV1 - 1]);
-            int findIndexV2 = getVertexIndex(vertices[indexV2 - 1]);
-            int findIndexV3 = getVertexIndex(vertices[indexV3 - 1]);
-
-            if (findIndexV1 == -1) {
-                vertexFaceMap[indexV1 - 1].push_back(faceIndex);
-            } else {
-                vertexFaceMap[findIndexV1].push_back(faceIndex);
-            }
-            if (findIndexV2 == -1) {
-                vertexFaceMap[indexV2 - 1].push_back(faceIndex);
-            } else {
-                vertexFaceMap[findIndexV2].push_back(faceIndex);
-            }
-            if (findIndexV3 == -1) {
-                vertexFaceMap[indexV3 - 1].push_back(faceIndex);
-            } else {
-                vertexFaceMap[findIndexV3].push_back(faceIndex);
+                if (std::getline(faceStream, textureIndex, '/')) {
+                    if (!textureIndex.empty()) {
+                        textureIndices.push_back(std::stoi(textureIndex) - 1);
+                    }
+                }
             }
 
-            triangles.push_back(triangle);
-            materialMap[faceIndex] = material;
-            faceIndex++;
+            if (vertexIndices.size() == 3) {
+                ModelTriangle triangle(
+                        vertices[vertexIndices[0]],
+                        vertices[vertexIndices[1]],
+                        vertices[vertexIndices[2]],
+                        colour
+                );
+
+                if (textureIndices.size() == 3) {
+                    triangle.texturePoints[0] = TexturePoint(
+                            texturePoints[textureIndices[0]].x,
+                            texturePoints[textureIndices[0]].y
+                    );
+                    triangle.texturePoints[1] = TexturePoint(
+                            texturePoints[textureIndices[1]].x,
+                            texturePoints[textureIndices[1]].y
+                    );
+                    triangle.texturePoints[2] = TexturePoint(
+                            texturePoints[textureIndices[2]].x,
+                            texturePoints[textureIndices[2]].y
+                    );
+                }
+
+                glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
+                glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
+                triangle.normal = glm::normalize(glm::cross(e0, e1));
+
+                for (int i = 0; i < 3; ++i) {
+                    int vertexIndex = vertexIndices[i];
+                    int foundIndex = getVertexIndex(vertices[vertexIndex]);
+                    if (foundIndex == -1) {
+                        vertexFaceMap[vertexIndex].push_back(faceIndex);
+                    } else {
+                        vertexFaceMap[foundIndex].push_back(faceIndex);
+                    }
+                }
+
+                triangles.push_back(triangle);
+                materialMap[faceIndex] = material;
+                faceIndex++;
+            }
         }
         else if (identifier == "usemtl") {
             lineStream >> material;

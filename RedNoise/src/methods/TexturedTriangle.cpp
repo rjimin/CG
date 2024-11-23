@@ -7,7 +7,7 @@
 #include "Triangle.h"
 #include "TexturedTriangle.h"
 
-uint32_t getTextureColour(TexturePoint texturePoint, TextureMap &textureMap) {
+uint32_t TexturedTriangle::getTextureColour(TexturePoint texturePoint, TextureMap &textureMap) {
     int textureX = texturePoint.x * (textureMap.width - 1);
     int textureY = texturePoint.y * (textureMap.height - 1);
 
@@ -85,7 +85,7 @@ void drawTexturedLine(CanvasPoint from, CanvasPoint to, CanvasTriangle triangle,
 
         TexturePoint texturePoint = calculateTexturePos(triangle, canvasPoint);
 
-        uint32_t colour = getTextureColour(texturePoint, textureMap);
+        uint32_t colour = TexturedTriangle::getTextureColour(texturePoint, textureMap);
         window.setPixelColour(canvasPoint.x, canvasPoint.y, colour);
     }
 }

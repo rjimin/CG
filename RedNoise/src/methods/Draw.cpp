@@ -13,6 +13,7 @@
 #include "RayTriangleIntersection.h"
 #include "RayTracer.h"
 #include "LoadFile.h"
+#include "TexturedTriangle.h"
 #include "Draw.h"
 
 void Draw::drawGreyscale(DrawingWindow &window) {
@@ -127,9 +128,37 @@ uint32_t calculateColour(const Colour &trigColour, float brightness) {
     return colour;
 }
 
-uint32_t calculateReflectedColour(glm::vec3 &cameraPosition, glm::vec3 rayDirection, const std::vector<ModelTriangle> &triangles,
-                                  glm::vec3 intersectionPoint, const ModelTriangle& triangle, size_t triangleIndex,
-                                  float shadow, float brightness, const std::vector<glm::vec3> &lightCluster) {
+uint32_t calculateTextureColour(glm::vec3 intersectionPoint, const ModelTriangle& triangle, float brightness, std::string material) {
+    TextureMap texture = LoadFile::textureMaps[material];
+
+    glm::vec3 barycentricCoords = RayTracer::calculateBarycentricCoords(intersectionPoint, triangle);
+
+    TexturePoint texturePoint;
+
+    texturePoint.x = barycentricCoords.x * triangle.texturePoints[0].x +
+                     barycentricCoords.y * triangle.texturePoints[1].x +
+                     barycentricCoords.z * triangle.texturePoints[2].x;
+    texturePoint.y = barycentricCoords.x * triangle.texturePoints[0].y +
+                     barycentricCoords.y * triangle.texturePoints[1].y +
+                     barycentricCoords.z * triangle.texturePoints[2].y;
+
+    texturePoint.x = glm::clamp(texturePoint.x, 0.0f, 1.0f);
+    texturePoint.y = glm::clamp(texturePoint.y, 0.0f, 1.0f);
+
+    uint32_t texColor = TexturedTriangle::getTextureColour(texturePoint, texture);
+
+    uint8_t red = (texColor >> 16) & 0xFF;
+    uint8_t green = (texColor >> 8) & 0xFF;
+    uint8_t blue = texColor & 0xFF;
+
+    Colour textureColour(red, green, blue);
+
+    return calculateColour(textureColour, brightness);
+}
+
+uint32_t calculateMirrorColour(glm::vec3 &cameraPosition, glm::vec3 rayDirection, const std::vector<ModelTriangle> &triangles,
+                               glm::vec3 intersectionPoint, const ModelTriangle& triangle, size_t triangleIndex,
+                               float shadow, float brightness, const std::vector<glm::vec3> &lightCluster) {
     glm::vec3 reflectedDirection = glm::normalize(rayDirection - 2.0f * glm::dot(rayDirection, triangle.normal) * triangle.normal);
 
     RayTriangleIntersection reflectionIntersection =
@@ -137,12 +166,24 @@ uint32_t calculateReflectedColour(glm::vec3 &cameraPosition, glm::vec3 rayDirect
                                               triangles, triangleIndex);
 
     if (RayTracer::intersectionFound && reflectionIntersection.distanceFromCamera > 0) {
+        const ModelTriangle &reflectedTriangle = reflectionIntersection.intersectedTriangle;
+        const glm::vec3 &reflectedIntersectionPoint = reflectionIntersection.intersectionPoint;
+
         float reflectionBrightness =
                 (1.0f - shadow) * RayTracer::calculateClusterBrightness(cameraPosition,
-                                                                        reflectionIntersection.intersectionPoint,
-                                                                        reflectionIntersection.intersectedTriangle.normal,
+                                                                        reflectedIntersectionPoint,
+                                                                        reflectedTriangle.normal,
                                                                         lightCluster);
-        return calculateColour(reflectionIntersection.intersectedTriangle.colour, reflectionBrightness);
+
+        int reflectedTrigIndex = LoadFile::getTriangleIndex(reflectedTriangle);
+        std::string reflectedMaterial = LoadFile::materialMap[reflectedTrigIndex];
+
+        if (!reflectedTriangle.texturePoints.empty() && LoadFile::textureMaps.count(reflectedMaterial)) {
+            return calculateTextureColour(reflectedIntersectionPoint, reflectedTriangle,
+                                          reflectionBrightness, reflectedMaterial);
+        } else {
+            return calculateColour(reflectedTriangle.colour, reflectionBrightness);
+        }
     } else {
         return calculateColour(triangle.colour, brightness);
     }
@@ -156,9 +197,14 @@ uint32_t drawPixelColour(glm::vec3 &cameraPosition, glm::vec3 &rayDirection, con
     float brightness = (1.0f - shadow) * RayTracer::calculateClusterBrightness(cameraPosition, intersectionPoint, triangle.normal, lightCluster);
 
     int trigIndex = LoadFile::getTriangleIndex(triangle);
-    if (materialMap[trigIndex] == "Mirror") {
-        return calculateReflectedColour(cameraPosition, rayDirection, triangles, intersectionPoint, triangle,
+    std::string material = LoadFile::materialMap[trigIndex];
+
+    if (material == "Mirror") {
+        return calculateMirrorColour(cameraPosition, rayDirection, triangles, intersectionPoint, triangle,
                                         triangleIndex, shadow, brightness, lightCluster);
+    }
+    else if (!triangle.texturePoints.empty() && LoadFile::textureMaps.count(material)) {
+        return calculateTextureColour(intersectionPoint, triangle, brightness, material);
     } else {
         return calculateColour(triangle.colour, brightness);
     }

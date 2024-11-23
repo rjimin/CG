@@ -153,7 +153,7 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPositi
             Draw::drawStrokedTriangle(triangle, {255, 255, 255}, window);
         }
         else if (event.key.keysym.sym == SDLK_t) {
-            TextureMap textureMap("models/texture.ppm");
+            TextureMap textureMap(baseDirectory + "texture.ppm");
 
             CanvasPoint v0 = {160, 10};
             CanvasPoint v1 = {300, 230};

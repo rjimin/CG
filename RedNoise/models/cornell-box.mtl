@@ -27,3 +27,7 @@ Kd 1.000000 1.000000 1.000000
 
 newmtl Metal
 Kd 0.830000 0.686000 0.215700
+
+newmtl Cobbles
+Kd 1.000000 1.000000 1.000000
+map_Kd texture.ppm
