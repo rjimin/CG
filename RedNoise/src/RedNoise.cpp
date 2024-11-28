@@ -51,7 +51,17 @@ void orbit(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOr
         glm::vec3 target = Triangle::calculateCenter(triangles);
         cameraOrientation = lookAt(cameraPosition, target);
     }
-    Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+    switch (currentRenderMode) {
+        case RASTERISED:
+            Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+            break;
+        case WIREFRAME:
+            Draw::drawWireframe(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+            break;
+        default:
+            Draw::drawRasterisedScene(window, cameraPosition, cameraOrientation, focalLength, triangles, depthBuffer);
+            break;
+    }
 }
 
 void renderScene(DrawingWindow &window, glm::vec3 &cameraPosition, glm::mat3 &cameraOrientation, float focalLength,
