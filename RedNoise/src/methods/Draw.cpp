@@ -185,7 +185,7 @@ uint32_t calculateMirrorColour(glm::vec3 &cameraPosition, glm::vec3 rayDirection
             return calculateColour(reflectedTriangle.colour, reflectionBrightness);
         }
     } else {
-        return calculateColour(triangle.colour, brightness);
+        return calculateColour({255, 255, 255}, brightness);
     }
 }
 
