@@ -82,11 +82,12 @@ float calculateDiffuseLighting(glm::vec3 lightDirection, const glm::vec3 &inters
 }
 
 float calculateSpecularHighlighting(glm::vec3 lightDirection, glm::vec3 &cameraPosition, const glm::vec3 &intersectionPoint, const glm::vec3 &normal, const glm::vec3 &lightSource) {
-    float specularExponent = 256.0f;
     glm::vec3 viewDirection = glm::normalize(cameraPosition - intersectionPoint);
-    glm::vec3 reflectionDirection = glm::normalize(lightDirection - 2.0f * normal * glm::dot(lightDirection, normal));
+    glm::vec3 reflectionDirection = glm::reflect(-lightDirection, normal);
+
+    float specularExponent = 256.0f;
     float specularFactor = glm::dot(viewDirection, reflectionDirection);
-    float specularHighlighting = pow(glm::max(specularFactor, 0.0f), specularExponent);
+    float specularHighlighting = std::pow(std::max(specularFactor, 0.0f), specularExponent);
     specularHighlighting = glm::clamp(specularHighlighting, 0.0f, 1.0f);
 
     return specularHighlighting;
